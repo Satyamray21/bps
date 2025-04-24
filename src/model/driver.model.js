@@ -1,7 +1,7 @@
-import mongoose  from "mongoose";
+import mongoose from "mongoose";
+import bcrypt from "bcrypt";
 
-const driverSchema = new mongoose.Schema(
-    {
+const driverSchema = new mongoose.Schema({
     firstName :{
         type:String,
         required:true
@@ -43,11 +43,13 @@ const driverSchema = new mongoose.Schema(
     },
     dlNumber:{
         type:String,
-        required:true
+        required:true,
+        unique:true
     },
     idProof:{
         type:String,
-        required:true
+        required:true,
+        unique:true
     },
     idProofPhoto:{
         type:String,
@@ -56,9 +58,31 @@ const driverSchema = new mongoose.Schema(
     driverProfilePhoto:{
         type:String,
        
+    },
+
+    driverId: {
+        type: String,
+        unique: true
     }
-},{timestamps:true}
-)
+}, { timestamps: true });
+
+driverSchema.pre("save", async function (next) {
+    if (this.isModified("password")) {
+        const salt = await bcrypt.genSalt(10);
+        this.password = await bcrypt.hash(this.password, salt);
+    }
+
+    if (!this.driverId) {
+        const randomSuffix = Math.random().toString(36).substring(2, 6).toUpperCase();
+        this.driverId = `${this.firstName}_${randomSuffix}`;
+    }
+
+    next();
+});
 
 
-export const Driver = mongoose.model("driver",driverSchema);
+driverSchema.methods.isPasswordMatch = async function (enteredPassword) {
+    return await bcrypt.compare(enteredPassword, this.password);
+};
+
+export const Driver = mongoose.model("driver", driverSchema);

@@ -58,13 +58,21 @@ export const createDriver = asyncHandler(async (req, res) => {
 
 export const getAllDrivers = asyncHandler(async (req, res) => {
     const drivers = await Driver.find();
-    return res
-    .status(200)
-    .json(new ApiResponse(
-        200, 
-        "Drivers fetched successfully", 
-        drivers));
+
+    const driverList = drivers.map((driver, index) => ({
+        sNo: index + 1,
+        driverId: driver.driverId,
+        name: `${driver.firstName} ${driver.middleName ? driver.middleName + ' ' : ''}${driver.lastName}`,
+        contactNumber: driver.contactNumber
+    }));
+
+    return res.status(200).json(new ApiResponse(
+        200,
+        "Drivers fetched successfully",
+        driverList
+    ));
 });
+
 
 
 export const getTotalDriversCount = asyncHandler(async (req, res) => {
