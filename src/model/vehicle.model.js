@@ -107,7 +107,15 @@ const VehicleSchema = new mongoose.Schema({
     type: String,
     unique: true,
   },
-}, { timestamps: true });
+  isActive: {
+    type: Boolean,
+    default: true,
+  },
+  isBlacklisted: {
+    type: Boolean,
+    default: false
+  }
+}, {timestamps: true });
 
 VehicleSchema.pre("save", async function (next) {
   if (!this.vehicleId) {

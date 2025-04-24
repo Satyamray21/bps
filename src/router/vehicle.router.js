@@ -5,6 +5,10 @@ import {
   getVehicleById,
   updateVehicle,
   deleteVehicle,
+  getTotalVehiclesCount,
+  getAvailableVehiclesCount,
+  getDeactivatedVehiclesCount,
+  getBlacklistedVehiclesCount
 } from "../controller/vehicle.controller.js";
 
 const router = express.Router();
@@ -26,4 +30,8 @@ router.put("/vehicle/:id", updateVehicle);
 // Delete vehicle by MongoDB _id
 router.delete("/vehicle/:id", deleteVehicle);
 
+router.get('/total-vehicles', getTotalVehiclesCount);
+router.get('/available-vehicles', getAvailableVehiclesCount);
+router.get('/deactivated-vehicles', getDeactivatedVehiclesCount);
+router.get('/blacklisted-vehicles', getBlacklistedVehiclesCount);
 export default router;

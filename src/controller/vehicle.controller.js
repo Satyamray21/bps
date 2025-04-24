@@ -31,6 +31,8 @@ export const createVehicle = asyncHandler(async (req, res) => {
     renewalDate,
     renewalValidUpto,
     addcomment,
+    isBlacklisted,   
+    isActive         
   } = req.body;
 
   if (!vehicleModel || !ownedBy || !registrationNumber || !currentLocation) {
@@ -66,12 +68,15 @@ export const createVehicle = asyncHandler(async (req, res) => {
     renewalDate,
     renewalValidUpto,
     addcomment,
+    isBlacklisted,    
+    isActive         
   });
 
   return res
     .status(201)
     .json(new ApiResponse(201, "Vehicle created successfully", vehicle));
 });
+
 
 // GET All Vehicles
 export const getAllVehicles = asyncHandler(async (req, res) => {
@@ -129,3 +134,39 @@ export const deleteVehicle = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, "Vehicle deleted successfully"));
 });
+
+// GET Total Vehicle Count
+export const getTotalVehiclesCount = asyncHandler(async (req, res) => {
+  const totalVehicles = await Vehicle.countDocuments();
+
+  return res.status(200).json(new ApiResponse(200, "Total vehicles count fetched successfully", { totalVehicles }));
+});
+
+// GET Available Vehicle Count
+export const getAvailableVehiclesCount = asyncHandler(async (req, res) => {
+  const availableVehicles = await Vehicle.countDocuments({
+    isActive: true,
+    isBlacklisted: false
+  });
+
+  return res.status(200).json(new ApiResponse(200, "Available vehicles count fetched successfully", { availableVehicles }));
+});
+
+// GET Deactivated Vehicle Count
+export const getDeactivatedVehiclesCount = asyncHandler(async (req, res) => {
+  const deactivatedVehicles = await Vehicle.countDocuments({
+    isActive: false
+  });
+
+  return res.status(200).json(new ApiResponse(200, "Deactivated vehicles count fetched successfully", { deactivatedVehicles }));
+});
+
+// GET Blacklisted Vehicle Count
+export const getBlacklistedVehiclesCount = asyncHandler(async (req, res) => {
+  const blacklistedVehicles = await Vehicle.countDocuments({
+    isBlacklisted: true
+  });
+
+  return res.status(200).json(new ApiResponse(200, "Blacklisted vehicles count fetched successfully", { blacklistedVehicles }));
+});
+
