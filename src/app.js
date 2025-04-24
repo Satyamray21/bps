@@ -25,5 +25,6 @@ import manageStation from "./router/manageStation.router.js"
 app.use("/api/v2/stations",manageStation);
 import driverRouter from "./router/driver.route.js"
 app.use("/api/v2/driver",driverRouter);
-
+import CustomerRouter from "./router/customer.route.js"
+app.use("/api/v2/customers",CustomerRouter);
 export {app}
