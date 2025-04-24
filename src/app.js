@@ -27,4 +27,8 @@ import driverRouter from "./router/driver.route.js"
 app.use("/api/v2/driver",driverRouter);
 import CustomerRouter from "./router/customer.route.js"
 app.use("/api/v2/customers",CustomerRouter);
+import userRouter from "./router/user.route.js"
+app.use("/api/v4/users",userRouter)
+import vehicleRouter from "./router/vehicle.router.js"
+app.use("/api/v2/vehicles",vehicleRouter)
 export {app}
