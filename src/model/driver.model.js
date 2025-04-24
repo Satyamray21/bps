@@ -7,7 +7,7 @@ const driverSchema = new mongoose.Schema({
         required:true
     },
     middleName:{
-        type:String,       
+        type:String       
     },
     lastName:{
         type:String,
@@ -52,17 +52,22 @@ const driverSchema = new mongoose.Schema({
         unique:true
     },
     idProofPhoto:{
-        type:String,
-       
+        type:String
     },
     driverProfilePhoto:{
-        type:String,
-       
+        type:String
     },
-
     driverId: {
         type: String,
         unique: true
+    },
+    isBlacklisted: {
+        type: Boolean,
+        default: false
+    },
+    isAvailable: {
+        type: Boolean,
+        default: true
     }
 }, { timestamps: true });
 
@@ -79,7 +84,6 @@ driverSchema.pre("save", async function (next) {
 
     next();
 });
-
 
 driverSchema.methods.isPasswordMatch = async function (enteredPassword) {
     return await bcrypt.compare(enteredPassword, this.password);
