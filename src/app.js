@@ -35,4 +35,6 @@ import customerQuotation from "./router/customerQuotation.router.js"
 app.use("/api/v2/quotation",customerQuotation);
 import contactRouter from "./router/contact.router.js"
 app.use("/api/v2/contact",contactRouter);
+import expenseRouter from "./router/expense.router.js"
+app.use("/api/v2/expenses",expenseRouter);
 export {app}
