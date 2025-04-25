@@ -1,88 +1,92 @@
-import mongoose  from "mongoose";
+import mongoose from "mongoose";
+import bcrypt from "bcrypt";
 
 const UserSchema = new mongoose.Schema(
-    {
-    firstName :{
-        type:String,
-        required:true
+  {
+    firstName: {
+      type: String,
+      required: true
     },
-    middleName:{
-        type:String,       
+    middleName: {
+      type: String,
     },
-    lastName:{
-        type:String,
-        required:true
+    lastName: {
+      type: String,
+      required: true
     },
-    emailId:{
-        type:String,
-        required:true,
-        unique:true
+    emailId: {
+      type: String,
+      required: true,
+      unique: true
     },
-    contactNumber:{
-        type:Number
+    contactNumber: {
+      type: String,
+      required: true
     },
-    password:{
-        type:String,
-        required:true,
-        minLength:[6,"Password should be atleast of 6 length"]
+    password: {
+      type: String,
+      required: true,
+      minLength: [6, "Password should be at least 6 characters long"]
     },
-    address:{
-        type:String,
-        required:true
+    address: {
+      type: String,
+      required: true
     },
-    distinct:{
-        type:String
+    distinct: {
+      type: String
     },
-    state:{
-        type:String,
-        required:true
+    state: {
+      type: String,
+      required: true
     },
-    city:{
-        type:String,
-        required:true
+    city: {
+      type: String,
+      required: true
     },
-    idProof:{
-        type:String,
-        required:true,
-        unique:true
+    idProof: {
+      type: String,
+      required: true,
+      unique: true
     },
-    idProofPhoto:{
-        type:String,
-       
+    idProofPhoto: {
+      type: String,
     },
-    adminProfilePhoto:{
-        type:String,
-        
+    adminProfilePhoto: {
+      type: String,
     },
-    role:{
-        type:String,
-        enum:['supervisor','admin']
+    role: {
+      type: String,
+      enum: ['supervisor', 'admin'],
+      required: true
     },
     adminId: {
-        type: String,
-        unique: true
-      },
-      isBlacklisted: {
-        type: Boolean,
-        default: false,
+      type: String,
+      unique: true
+    },
+    isBlacklisted: {
+      type: Boolean,
+      default: false
     },
     isActive: {
-        type: Boolean,
-        default: true, 
-    },
-      
-},{timestamps:true}
-)
-UserSchema.pre("save", async function (next) {
-    
-
-    if (!this.adminId) {
-        const randomSuffix = Math.random().toString(36).substring(2, 6).toUpperCase();
-        this.adminId = `${this.firstName}_${randomSuffix}`;
+      type: Boolean,
+      default: true
     }
+  },
+  { timestamps: true }
+);
 
-    next();
+// Pre-save hook for password hashing and adminId generation
+UserSchema.pre("save", async function (next) {
+  if (this.isModified("password")) {
+    this.password = await bcrypt.hash(this.password, 10); // Hash password before saving
+  }
+
+  if (!this.adminId) {
+    const randomSuffix = Math.random().toString(36).substring(2, 6).toUpperCase();
+    this.adminId = `${this.firstName}_${randomSuffix}`;
+  }
+
+  next();
 });
 
-
-export const User = mongoose.model("User",UserSchema);
+export const User = mongoose.model("User", UserSchema);

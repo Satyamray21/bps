@@ -127,17 +127,17 @@ const quotationSchema = new mongoose.Schema({
   },
 }, { timestamps: true });
 
-// Booking ID auto-generation
+
 quotationSchema.pre("save", async function (next) {
   if (!this.bookingId) {
     const count = await mongoose.model("Quotation").countDocuments();
     const padded = (count + 1).toString().padStart(4, "0");
-    this.bookingId = `BHPAR4${padded}QUOK`;
+    this.bookingId = `BHPAR${padded}QUOK`;
   }
   next();
 });
 
-// Virtuals
+
 quotationSchema.virtual("bookingRequestTotal").get(function () {
   return this.productDetails.reduce((acc, item) => acc + item.quantity, 0);
 });
@@ -147,12 +147,12 @@ quotationSchema.virtual("totalTax").get(function () {
 });
 
 quotationSchema.virtual("computedTotalRevenue").get(function () {
-  // Calculate the total cost of products
+  
   const productTotal = this.productDetails.reduce((acc, item) => {
     return acc + (item.price * item.quantity);
   }, 0);
   
-  // Subtract the tax (sTax and sgst) from the total product cost
+
   const totalRevenue = productTotal - (this.sTax + this.sgst);
 
   return totalRevenue;
