@@ -118,21 +118,21 @@ export const getTotalCancelled = asyncHandler(async (req, res) => {
 });
 
 // Get Total Revenue Controller
+// Get Total Revenue Controller
 export const getTotalRevenue = asyncHandler(async (req, res) => {
   const quotations = await Quotation.find();
 
   const total = quotations.reduce((sum, q) => {
-    // Ensure values are numbers and treat invalid/undefined fields as 0
-    const grandTotal = Number(q.grandTotal) || 0;
-    const sTax = Number(q.sTax) || 0;
-    const sgst = Number(q.sgst) || 0;
+    // Use the computedTotalRevenue from the virtual field
+    const computedRevenue = Number(q.computedTotalRevenue) || 0;
 
-    // Calculate the revenue
-    return sum + (grandTotal - sTax - sgst);
+    // Accumulate the computed revenue
+    return sum + computedRevenue;
   }, 0);
 
   res.status(200).json(new ApiResponse(200, { totalRevenue: total }));
 });
+
 
 // Search Quotation by Booking ID Controller
 export const searchQuotationByBookingId = asyncHandler(async (req, res, next) => {
