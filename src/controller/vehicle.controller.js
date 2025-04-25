@@ -5,6 +5,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 
 // CREATE Vehicle
 export const createVehicle = asyncHandler(async (req, res) => {
+  console.log("Reg body:",req.body);
   const {
     registrationDate,
     regExpiryDate,

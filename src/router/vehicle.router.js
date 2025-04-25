@@ -10,24 +10,24 @@ import {
   getDeactivatedVehiclesCount,
   getBlacklistedVehiclesCount
 } from "../controller/vehicle.controller.js";
-
+import { parseFormData } from "../middleware/multerParser.middleware.js";
 const router = express.Router();
 
-// Create a vehicle
-router.post("/vehicle", createVehicle);
 
-// Get all vehicles (with s.no, vehicleId, location, owner name, model)
+router.post("/vehicle",parseFormData, createVehicle);
+
+
 router.get("/getAllvehicle", getAllVehicles);
 
 router.get("/vehicle/:vehicleId", getVehicleById);
 
-// Get a single vehicle by MongoDB _id
+
 router.get("/vehicle/:id", getVehicleById);
 
-// Update vehicle by MongoDB _id
-router.put("/vehicle/:id", updateVehicle);
 
-// Delete vehicle by MongoDB _id
+router.put("/vehicle/:id", parseFormData,updateVehicle);
+
+
 router.delete("/vehicle/:id", deleteVehicle);
 
 router.get('/total-vehicles', getTotalVehiclesCount);
