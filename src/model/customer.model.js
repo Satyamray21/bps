@@ -53,6 +53,15 @@ const customerSchema = new mongoose.Schema({
         type: String,
         unique: true
     },
+    status: { 
+        type: String,
+        enum: ["active", "inactive"],
+        default: "active"
+    },
+    isBlacklisted: { 
+        type: Boolean,
+        default: false
+    }
     
 }, { timestamps: true });
 
