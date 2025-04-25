@@ -33,4 +33,6 @@ import vehicleRouter from "./router/vehicle.router.js"
 app.use("/api/v2/vehicles",vehicleRouter)
 import customerQuotation from "./router/customerQuotation.router.js"
 app.use("/api/v2/quotation",customerQuotation);
+import contactRouter from "./router/contact.router.js"
+app.use("/api/v2/contact",contactRouter);
 export {app}
