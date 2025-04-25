@@ -6,6 +6,9 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 // Register a new user
 export const registerUser = asyncHandler(async (req, res) => {
   try {
+    if (req.body.role === 'admin' && req.body.isBlacklisted === true) {
+      throw new ApiError(400, "Admin users cannot be blacklisted");
+    }
     const user = new User(req.body);
     await user.save();
     res.status(201).json(new ApiResponse(201, "User registered successfully", user));
