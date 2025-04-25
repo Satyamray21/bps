@@ -37,12 +37,15 @@ const manageStationSchema = new mongoose.Schema({
 
 manageStationSchema.pre("save", async function (next) {
     if (!this.stationId) {
-        const randomCode = Math.random().toString(36).substring(2, 6).toUpperCase();
-        const prefix = this.stationName.slice(0, 4).toUpperCase();
-        this.stationId = `STN-${prefix}-${randomCode}`;
+      const randomCode = Math.floor(Math.random() * 10000).toString().padStart(4, "0");  
+      const prefix = "BHPAR";  
+      const suffix = "STA";    
+  
+      this.stationId = `${prefix}${randomCode}${suffix}`;  
     }
     next();
-});
+  });
+  
 const manageStation = mongoose.model("manageStation",manageStationSchema);
 
 export default manageStation;
