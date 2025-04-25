@@ -31,4 +31,6 @@ import userRouter from "./router/user.route.js"
 app.use("/api/v4/users",userRouter)
 import vehicleRouter from "./router/vehicle.router.js"
 app.use("/api/v2/vehicles",vehicleRouter)
+import customerQuotation from "./router/customerQuotation.router.js"
+app.use("/api/v2/quotation",customerQuotation);
 export {app}
