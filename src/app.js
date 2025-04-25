@@ -37,4 +37,9 @@ import contactRouter from "./router/contact.router.js"
 app.use("/api/v2/contact",contactRouter);
 import expenseRouter from "./router/expense.router.js"
 app.use("/api/v2/expenses",expenseRouter);
+
+
+import bookingRouter from "./router/booking.router.js"
+app.use("/api/v2/bookings",bookingRouter);
+
 export {app}
