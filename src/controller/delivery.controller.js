@@ -121,26 +121,35 @@ export const listBookingDeliveries = asyncHandler(async (req, res) => {
 
 // List all Quotation Deliveries
 export const listQuotationDeliveries = asyncHandler(async (req, res) => {
-  const deliveries = await Delivery.find({ deliveryType: "Quotation" ,status: { $ne: "Final Delivery" }})
-    .lean()  // optimize performance with lean queries
+  const deliveries = await Delivery.find({ deliveryType: "Quotation", status: { $ne: "Final Delivery" } })
     .populate({
-      path: "quotationId",
-      select: "customerDetails quotationDate", // Select necessary fields from Quotation
+      path: "quotationId",  // Populate the Quotation details
+      select: "fromCustomerName toCustomerName startStation endStation quotationDate",
+      populate: {
+        path: "startStation endStation",  // Populate Station Names
+        select: "stationName"
+      }
     })
-    .populate("vehicleId", "vehicleName"); // Populate Vehicle information with vehicleName
+    .populate("vehicleId", "vehicleName")  // Populate Vehicle Name
+    .lean();  // Use lean() for performance optimization
 
   const data = deliveries.map((delivery, i) => ({
     SNo: i + 1,
     orderId: delivery.orderId,
-    quotationDate: delivery.quotationId?.quotationDate || "N/A",
-    customerDetails: delivery.quotationId?.customerDetails || "N/A",
+    senderName: delivery.quotationId?.fromCustomerName || "N/A",
+    receiverName: delivery.quotationId?.toCustomerName || "N/A",
+    startStation: delivery.quotationId?.startStation?.stationName || "N/A",
+    endStation: delivery.quotationId?.endStation?.stationName || "N/A",  // Ensure endStation is populated
     status: delivery.status || "Pending",
     driverName: delivery.driverName || "N/A",
     vehicleName: delivery.vehicleId?.vehicleName || "N/A",
+    
   }));
 
   res.status(200).json(new ApiResponse(200, data, "Quotation deliveries fetched successfully."));
 });
+
+
 
 // Finalize Delivery
 export const finalizeDelivery = asyncHandler(async (req, res) => {
