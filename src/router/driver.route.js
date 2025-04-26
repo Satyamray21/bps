@@ -13,12 +13,21 @@ import {
     getBlacklistedDriversCount,
     updateDriverStatus
 } from "../controller/driver.controller.js";
-import { parseFormData } from "../middleware/multerParser.middleware.js";
 
+import { upload } from "../middleware/multer.middleware.js";
+import { multerErrorHandler } from "../utils/multerErrorHandler.js";
 const router = express.Router();
 
 // ➡️ Create Driver
-router.post("/create", parseFormData, createDriver);
+router.route("/create").post(upload.fields([
+      {
+          name:"idProofPhoto",
+          maxCount :1
+      },{
+          name:"driverProfilePhoto",
+          maxCount:1
+      }
+  ]),multerErrorHandler , createDriver);
 
 // ➡️ Get All Drivers
 router.get("/all", getAllDrivers);
@@ -45,7 +54,7 @@ router.get("/:id", getDriverById);
 router.get("/driver-id/:driverId", getDriverByDriverId);
 
 // ➡️ Update Driver details
-router.put("/update/:id", parseFormData, updateDriver);
+router.put("/update/:id",updateDriver);
 
 // ➡️ Update only Driver Status (isAvailable, isBlacklisted)
 router.patch("/update-status/:id", updateDriverStatus);

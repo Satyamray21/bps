@@ -52,10 +52,12 @@ const driverSchema = new mongoose.Schema({
         unique:true
     },
     idProofPhoto:{
-        type:String
+        type:String,
+        required:true
     },
     driverProfilePhoto:{
-        type:String
+        type:String,
+        required:true
     },
     driverId: {
         type: String,

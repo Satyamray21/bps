@@ -2,6 +2,7 @@ import { Driver } from "../model/driver.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+ import fs from "fs/promises";
 
 // 🔥 Helper function to format driver list
 const formatDriverList = (drivers) => {
@@ -43,6 +44,8 @@ export const createDriver = asyncHandler(async (req, res) => {
         .some(field => typeof field === "string" && field.trim() === "")) {
         throw new ApiError(400, "All required fields must be provided.");
     }
+    const idProofPhoto = req.files?.idProofPhoto?.[0]?.path || null;
+    const driverProfilePhoto = req.files?.driverProfilePhoto?.[0]?.path || null;
 
     const existingDriver = await Driver.findOne({ emailId });
     if (existingDriver) {
@@ -62,10 +65,23 @@ export const createDriver = asyncHandler(async (req, res) => {
         city,
         dlNumber,
         idProof,
+        idProofPhoto,
+        driverProfilePhoto,
         isBlacklisted: isBlacklisted === "true" || isBlacklisted === true,
         isAvailable: isAvailable === "true" || isAvailable === true,
     });
-
+    try {
+        if (idProofPhoto) {
+          await fs.unlink(idProofPhoto);
+        }
+        if (driverProfilePhoto) {
+          await fs.unlink(driverProfilePhoto);
+        }
+      } catch (error) {
+        console.error("Error deleting temp files:", error);
+      }
+    
+   
     return res.status(201).json(new ApiResponse(201, "Driver created successfully", driver));
 });
 
