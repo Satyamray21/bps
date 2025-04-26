@@ -8,7 +8,10 @@ import {
   getTotalVehiclesCount,
   getAvailableVehiclesCount,
   getDeactivatedVehiclesCount,
-  getBlacklistedVehiclesCount
+  getBlacklistedVehiclesCount,
+  getBlacklistedVehicles,
+  getDeactivatedVehicles,
+  getAvailableVehicles
 } from "../controller/vehicle.controller.js";
 import { parseFormData } from "../middleware/multerParser.middleware.js";
 const router = express.Router();
@@ -34,4 +37,7 @@ router.get('/total-vehicles', getTotalVehiclesCount);
 router.get('/available-vehicles', getAvailableVehiclesCount);
 router.get('/deactivated-vehicles', getDeactivatedVehiclesCount);
 router.get('/blacklisted-vehicles', getBlacklistedVehiclesCount);
+router.get('/blacklisted-vehicles-List', getBlacklistedVehicles);
+router.get('/deactivated-vehicles-List', getDeactivatedVehicles);
+router.get('/available-vehicles-List', getAvailableVehicles)
 export default router;

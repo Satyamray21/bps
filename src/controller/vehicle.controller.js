@@ -3,9 +3,20 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
+// Helper function to format vehicle details
+const formatVehicleDetails = (vehicles) => {
+  return vehicles.map((vehicle, index) => ({
+    sNo: index + 1,
+    vehicleId: vehicle.vehicleId,
+    location: vehicle.currentLocation,
+    ownedBy: vehicle.ownedBy,
+    vehicleModel: vehicle.vehicleModel,
+  }));
+};
+
 // CREATE Vehicle
 export const createVehicle = asyncHandler(async (req, res) => {
-  console.log("Reg body:",req.body);
+  console.log("Reg body:", req.body);
   const {
     registrationDate,
     regExpiryDate,
@@ -32,8 +43,8 @@ export const createVehicle = asyncHandler(async (req, res) => {
     renewalDate,
     renewalValidUpto,
     addcomment,
-    isBlacklisted,   
-    isActive         
+    isBlacklisted,
+    isActive
   } = req.body;
 
   if (!vehicleModel || !ownedBy || !registrationNumber || !currentLocation) {
@@ -69,8 +80,8 @@ export const createVehicle = asyncHandler(async (req, res) => {
     renewalDate,
     renewalValidUpto,
     addcomment,
-    isBlacklisted,    
-    isActive         
+    isBlacklisted,
+    isActive
   });
 
   return res
@@ -78,25 +89,18 @@ export const createVehicle = asyncHandler(async (req, res) => {
     .json(new ApiResponse(201, "Vehicle created successfully", vehicle));
 });
 
-
 // GET All Vehicles
 export const getAllVehicles = asyncHandler(async (req, res) => {
   const vehicles = await Vehicle.find();
 
-  const vehicleList = vehicles.map((vehicle, index) => ({
-    sNo: index + 1,
-    vehicleId: vehicle.vehicleId,
-    location: vehicle.currentLocation,
-    ownedBy: vehicle.ownedBy,
-    vehicleModel: vehicle.vehicleModel,
-  }));
+  const vehicleList = formatVehicleDetails(vehicles);  // Using the helper function
 
   return res
     .status(200)
     .json(new ApiResponse(200, "Vehicles fetched successfully", vehicleList));
 });
 
-// GET Vehicle by ID
+// GET Vehicle by ID (Full Details)
 export const getVehicleById = asyncHandler(async (req, res) => {
   const { vehicleId } = req.params; // Getting vehicleId from request parameters
 
@@ -110,8 +114,7 @@ export const getVehicleById = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, "Vehicle fetched successfully", vehicle));
 });
 
-
-// UPDATE Vehicle
+// UPDATE Vehicle (Full Details)
 export const updateVehicle = asyncHandler(async (req, res) => {
   const updated = await Vehicle.findByIdAndUpdate(req.params.id, req.body, {
     new: true,
@@ -140,7 +143,9 @@ export const deleteVehicle = asyncHandler(async (req, res) => {
 export const getTotalVehiclesCount = asyncHandler(async (req, res) => {
   const totalVehicles = await Vehicle.countDocuments();
 
-  return res.status(200).json(new ApiResponse(200, "Total vehicles count fetched successfully", { totalVehicles }));
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Total vehicles count fetched successfully", { totalVehicles }));
 });
 
 // GET Available Vehicle Count
@@ -150,7 +155,9 @@ export const getAvailableVehiclesCount = asyncHandler(async (req, res) => {
     isBlacklisted: false
   });
 
-  return res.status(200).json(new ApiResponse(200, "Available vehicles count fetched successfully", { availableVehicles }));
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Available vehicles count fetched successfully", { availableVehicles }));
 });
 
 // GET Deactivated Vehicle Count
@@ -159,7 +166,9 @@ export const getDeactivatedVehiclesCount = asyncHandler(async (req, res) => {
     isActive: false
   });
 
-  return res.status(200).json(new ApiResponse(200, "Deactivated vehicles count fetched successfully", { deactivatedVehicles }));
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Deactivated vehicles count fetched successfully", { deactivatedVehicles }));
 });
 
 // GET Blacklisted Vehicle Count
@@ -168,6 +177,53 @@ export const getBlacklistedVehiclesCount = asyncHandler(async (req, res) => {
     isBlacklisted: true
   });
 
-  return res.status(200).json(new ApiResponse(200, "Blacklisted vehicles count fetched successfully", { blacklistedVehicles }));
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Blacklisted vehicles count fetched successfully", { blacklistedVehicles }));
 });
 
+// GET Blacklisted Vehicles (List with sNo)
+export const getBlacklistedVehicles = asyncHandler(async (req, res) => {
+  const blacklistedVehicles = await Vehicle.find({
+    isBlacklisted: true
+  })
+    .select('vehicleId currentLocation ownedBy vehicleModel')  // Selecting only the fields needed
+    .lean();  // Using .lean() for better performance when we don't need full Mongoose document features
+
+  const result = formatVehicleDetails(blacklistedVehicles);  // Using the helper function
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Blacklisted vehicles fetched successfully", { blacklistedVehicles: result }));
+});
+
+// GET Deactivated Vehicles (List with sNo)
+export const getDeactivatedVehicles = asyncHandler(async (req, res) => {
+  const deactivatedVehicles = await Vehicle.find({
+    isActive: false
+  })
+    .select('vehicleId currentLocation ownedBy vehicleModel')
+    .lean();
+
+  const result = formatVehicleDetails(deactivatedVehicles);  // Using the helper function
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Deactivated vehicles fetched successfully", { deactivatedVehicles: result }));
+});
+
+// GET Available Vehicles (List with sNo)
+export const getAvailableVehicles = asyncHandler(async (req, res) => {
+  const availableVehicles = await Vehicle.find({
+    isActive: true,
+    isBlacklisted: false
+  })
+    .select('vehicleId currentLocation ownedBy vehicleModel')
+    .lean();
+
+  const result = formatVehicleDetails(availableVehicles);  // Using the helper function
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, "Available vehicles fetched successfully", { availableVehicles: result }));
+});
