@@ -3,6 +3,24 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
+// 🔥 Helper function to format driver list
+const formatDriverList = (drivers) => {
+    return drivers.map((driver, index) => ({
+        sNo: index + 1,
+        driverId: driver.driverId,
+        name: `${driver.firstName} ${driver.middleName ? driver.middleName + ' ' : ''}${driver.lastName}`,
+        contactNumber: driver.contactNumber,
+        isAvailable: driver.isAvailable,
+        isBlacklisted: driver.isBlacklisted,
+        actions: [
+            { name: "View", icon: "view-icon", action: `/api/drivers/${driver.driverId}` },
+            { name: "Edit", icon: "edit-icon", action: `/api/drivers/edit/${driver.driverId}` },
+            { name: "Delete", icon: "delete-icon", action: `/api/drivers/delete/${driver.driverId}` }
+        ]
+    }));
+};
+
+// ➡️ Create Driver
 export const createDriver = asyncHandler(async (req, res) => {
     const {
         firstName,
@@ -19,7 +37,6 @@ export const createDriver = asyncHandler(async (req, res) => {
         idProof,
         isAvailable,
         isBlacklisted
-
     } = req.body;
 
     if ([firstName, lastName, emailId, password, address, state, city, dlNumber, idProof]
@@ -52,41 +69,64 @@ export const createDriver = asyncHandler(async (req, res) => {
     return res.status(201).json(new ApiResponse(201, "Driver created successfully", driver));
 });
 
+// ➡️ Get All Drivers (Formatted)
 export const getAllDrivers = asyncHandler(async (req, res) => {
     const drivers = await Driver.find();
-
-    const driverList = drivers.map((driver, index) => ({
-        sNo: index + 1,
-        driverId: driver.driverId,
-        name: `${driver.firstName} ${driver.middleName ? driver.middleName + ' ' : ''}${driver.lastName}`,
-        contactNumber: driver.contactNumber,
-        isAvailable: driver.isAvailable,
-        isBlacklisted: driver.isBlacklisted
-    }));
-
-    return res.status(200).json(new ApiResponse(200, "Drivers fetched successfully", driverList));
+    const driverList = formatDriverList(drivers);
+    return res.status(200).json(new ApiResponse(200, "All drivers fetched successfully", driverList));
 });
 
+// ➡️ Get Available Drivers (Formatted)
+export const getAvailableDrivers = asyncHandler(async (req, res) => {
+    const drivers = await Driver.find({ isAvailable: true, isBlacklisted: false });
+    const driverList = formatDriverList(drivers);
+    return res.status(200).json(new ApiResponse(200, "Available drivers fetched successfully", driverList));
+});
+
+// Get Blacklisted Drivers (Formatted)
+export const getBlacklistedDrivers = asyncHandler(async (req, res) => {
+    const drivers = await Driver.find({ isBlacklisted: true });
+    const driverList = formatDriverList(drivers);
+    return res.status(200).json(new ApiResponse(200, "Blacklisted drivers fetched successfully", driverList));
+});
+
+// Get Total Drivers Count
 export const getTotalDriversCount = asyncHandler(async (req, res) => {
     const totalDrivers = await Driver.countDocuments();
     return res.status(200).json(new ApiResponse(200, "Total drivers count fetched", totalDrivers));
 });
 
-export const getDriverById = asyncHandler(async (req, res) => {
-    const driver = await Driver.findById({driverId: req.params.id});
-    if (!driver) {
-        throw new ApiError(404, "Driver not found");
-    }
-    return res.status(200).json(new ApiResponse(200, "Driver fetched", driver));
+// Get Available Drivers Count
+export const getAvailableDriversCount = asyncHandler(async (req, res) => {
+    const count = await Driver.countDocuments({ isAvailable: true, isBlacklisted: false });
+    return res.status(200).json(new ApiResponse(200, "Available drivers count fetched", count));
 });
+
+// Get Blacklisted Drivers Count
+export const getBlacklistedDriversCount = asyncHandler(async (req, res) => {
+    const count = await Driver.countDocuments({ isBlacklisted: true });
+    return res.status(200).json(new ApiResponse(200, "Blacklisted drivers count fetched", count));
+});
+
+//  Get Driver by driverId (custom ID)
 export const getDriverByDriverId = asyncHandler(async (req, res) => {
-    const driver = await Driver.findOne({ driverId: req.params.driverId }); // Find by custom driverId
+    const driver = await Driver.findOne({ driverId: req.params.driverId });
     if (!driver) {
         throw new ApiError(404, "Driver not found");
     }
     return res.status(200).json(new ApiResponse(200, "Driver fetched", driver));
 });
 
+//  Get Driver by _id (ObjectId)
+export const getDriverById = asyncHandler(async (req, res) => {
+    const driver = await Driver.findById(req.params.id);
+    if (!driver) {
+        throw new ApiError(404, "Driver not found");
+    }
+    return res.status(200).json(new ApiResponse(200, "Driver fetched", driver));
+});
+
+//  Update Driver by _id
 export const updateDriver = asyncHandler(async (req, res) => {
     const updatedDriver = await Driver.findByIdAndUpdate(req.params.id, req.body, {
         new: true,
@@ -98,24 +138,7 @@ export const updateDriver = asyncHandler(async (req, res) => {
     return res.status(200).json(new ApiResponse(200, "Driver updated successfully", updatedDriver));
 });
 
-export const deleteDriver = asyncHandler(async (req, res) => {
-    const deletedDriver = await Driver.findByIdAndDelete(req.params.id);
-    if (!deletedDriver) {
-        throw new ApiError(404, "Driver not found");
-    }
-    return res.status(200).json(new ApiResponse(200, "Driver deleted successfully"));
-});
-
-export const getAvailableDrivers = asyncHandler(async (req, res) => {
-    const drivers = await Driver.find({ isAvailable: true, isBlacklisted: false });
-    return res.status(200).json(new ApiResponse(200, "Available drivers fetched", drivers));
-});
-
-export const getBlacklistedDrivers = asyncHandler(async (req, res) => {
-    const drivers = await Driver.find({ isBlacklisted: true });
-    return res.status(200).json(new ApiResponse(200, "Blacklisted drivers fetched", drivers));
-});
-
+// Update Driver status (isAvailable / isBlacklisted)
 export const updateDriverStatus = asyncHandler(async (req, res) => {
     const { isAvailable, isBlacklisted } = req.body;
     const driver = await Driver.findByIdAndUpdate(
@@ -128,12 +151,12 @@ export const updateDriverStatus = asyncHandler(async (req, res) => {
     }
     return res.status(200).json(new ApiResponse(200, "Driver status updated", driver));
 });
-export const getAvailableDriversCount = asyncHandler(async (req, res) => {
-    const count = await Driver.countDocuments({ isAvailable: true, isBlacklisted: false });
-    return res.status(200).json(new ApiResponse(200, "Available drivers count fetched", count));
-});
-export const getBlacklistedDriversCount = asyncHandler(async (req, res) => {
-    const count = await Driver.countDocuments({ isBlacklisted: true });
-    return res.status(200).json(new ApiResponse(200, "Blacklisted drivers count fetched", count));
-});
 
+
+export const deleteDriver = asyncHandler(async (req, res) => {
+    const deletedDriver = await Driver.findByIdAndDelete(req.params.id);
+    if (!deletedDriver) {
+        throw new ApiError(404, "Driver not found");
+    }
+    return res.status(200).json(new ApiResponse(200, "Driver deleted successfully"));
+});
