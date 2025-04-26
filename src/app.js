@@ -42,4 +42,8 @@ app.use("/api/v2/expenses",expenseRouter);
 import bookingRouter from "./router/booking.router.js"
 app.use("/api/v2/bookings",bookingRouter);
 
+
+import deliveryRouter from "./router/delivery.router.js"
+app.use("/api/v2/delivery",deliveryRouter);
+
 export {app}
