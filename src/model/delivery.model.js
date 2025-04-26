@@ -1,19 +1,22 @@
-import mongoose from "mongoose";
+// model/delivery.model.js
+
+import mongoose from 'mongoose';
 
 const deliverySchema = new mongoose.Schema({
   orderId: {
     type: String,
     required: true,
-    unique: true, // Ensures the Order ID is unique
+    unique: true,
   },
-  bookingId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Booking", // Reference to the Booking model
-    required: true,
-  },
+  bookingId: { type: mongoose.Schema.Types.ObjectId, ref: "Booking" },
+quotationId: { type: mongoose.Schema.Types.ObjectId, ref: "Quotation" },
+deliveryType: { type: String, enum: ["Booking", "Quotation"], required: true },
+
+ 
+  
   driverName: {
-    type:String,
-    required: true
+    type: String,
+    required: true,
   },
   vehicleId: {
     type: mongoose.Schema.Types.ObjectId,

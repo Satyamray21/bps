@@ -162,6 +162,8 @@ quotationSchema.virtual("computedTotalRevenue").get(function () {
 quotationSchema.set("toJSON", { virtuals: true });
 quotationSchema.set("toObject", { virtuals: true });
 
-const Quotation = mongoose.model("Quotation", quotationSchema);
+const Quotation = mongoose.models.Quotation || mongoose.model("Quotation", quotationSchema);
 
 export default Quotation;
+
+

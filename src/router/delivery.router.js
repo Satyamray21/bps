@@ -1,28 +1,33 @@
-import express from "express";
-import { getDeliveries, 
-    assignDelivery, 
-    finalizeDelivery,
-    countPendingDeliveries,
-    countFinalDeliveries,
-    listPendingDeliveries,
-    listFinalDeliveries
- } from "../controller/delivery.controller.js";
+// routes/delivery.routes.js
 
-import {parseFormData } from "../middleware/multerParser.middleware.js"
+import express from 'express';
+import { 
+  assignDelivery, 
+  finalizeDelivery, 
+  countBookingDeliveries, 
+  countQuotationDeliveries, 
+  listBookingDeliveries, 
+  listQuotationDeliveries 
+} from '../controller/delivery.controller.js';
+import {parseFormData } from '../middleware/multerParser.middleware.js'
 const router = express.Router();
 
+// Assign a delivery to a booking
+router.post('/assign', parseFormData,assignDelivery);
 
-router.get("/deliveries", getDeliveries);
+// List all Booking Deliveries
+router.get('/booking', listBookingDeliveries);
 
+// List all Quotation Deliveries
+router.get('/quotation', listQuotationDeliveries);
 
-router.post("/assign", parseFormData ,assignDelivery);
+// Count Booking Deliveries
+router.get('/booking/count', countBookingDeliveries);
 
+// Count Quotation Deliveries
+router.get('/quotation/count', countQuotationDeliveries);
 
-router.put("/finalize/:orderId", finalizeDelivery);
-
-router.get("/pending/count", countPendingDeliveries);
-router.get("/final/count", countFinalDeliveries);
-router.get("/pending/list", listPendingDeliveries);
-router.get("/final/list", listFinalDeliveries);
+// Finalize a Delivery (based on orderId)
+router.put('/finalize/:orderId', finalizeDelivery);
 
 export default router;
