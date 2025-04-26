@@ -36,11 +36,19 @@ const BookingSchema = new mongoose.Schema(
     },
     mobile: { 
       type: String, 
-      required: true 
+      required: true, 
+      validate: {
+        validator: (v) => /^\d{10}$/.test(v),
+        message: props => `${props.value} is not a valid mobile number!`
+      }
     },
     email: { 
       type: String, 
-      required: true 
+      required: true, 
+      validate: {
+        validator: (v) => /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/.test(v),
+        message: props => `${props.value} is not a valid email address!`
+      }
     },
     locality: { 
       type: String, 
@@ -80,7 +88,11 @@ const BookingSchema = new mongoose.Schema(
     },
     senderPincode: { 
       type: String, 
-      required: true 
+      required: true, 
+      validate: {
+        validator: (v) => /^\d{6}$/.test(v),
+        message: props => `${props.value} is not a valid pincode!`
+      }
     },
 
     // Receiver Info
@@ -106,7 +118,11 @@ const BookingSchema = new mongoose.Schema(
     },
     toPincode: { 
       type: String, 
-      required: true 
+      required: true, 
+      validate: {
+        validator: (v) => /^\d{6}$/.test(v),
+        message: props => `${props.value} is not a valid pincode!`
+      }
     },
 
     // Reference Numbers

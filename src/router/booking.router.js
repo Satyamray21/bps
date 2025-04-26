@@ -1,33 +1,24 @@
 import express from 'express';
-import { createBooking, getBookings, getBookingById, updateBooking, deleteBooking, getActiveDeliveryCount, getActiveDeliveries,getBookingRequestCount, getBookingRequests} from "../controller/booking.controller.js";
+import { 
+  viewBooking, 
+  createBooking, 
+  updateBooking, 
+  deleteBooking, 
+  getBookingStatusList, 
+  getBookingRevenueList, 
+  getBookingRevenueDashboard 
+} from '../controller/booking.controller.js';
 
 const router = express.Router();
 
-// POST: Create a new booking
-router.post('/bookings', createBooking);
+router.get('/booking-list', getBookingStatusList);
+router.get('/revenue-list', getBookingRevenueList);
+router.get('/revenue-dashboard', getBookingRevenueDashboard);
 
-// GET: Get all bookings
-router.get('/bookings', getBookings);
-
-// GET: Get a booking by ID
-router.get('/bookings/:id', getBookingById);
-
-// PUT: Update a booking by ID
-router.put('/bookings/:id', updateBooking);
-
-// DELETE: Delete a booking by ID
-router.delete('/bookings/:id', deleteBooking);
-
-// GET: Get count of active deliveries
-router.get('/active-delivery-count', getActiveDeliveryCount);
-
-// GET: Get list of active deliveries with specific fields
-router.get('/active-deliveries', getActiveDeliveries);
-
-router.get('/booking-request-count', getBookingRequestCount);
-
-// GET: Get list of booking requests with specific fields
-router.get('/booking-requests', getBookingRequests);
-
+// ✅ CRUD routes AFTER static routes
+router.post('/', createBooking);           // Create a new booking
+router.get('/:id', viewBooking);           // View by bookingId (not _id!)
+router.put('/:id', updateBooking);         // Update by bookingId
+router.delete('/:id', deleteBooking);                   // Delete by bookingId
 
 export default router;

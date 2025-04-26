@@ -1,137 +1,283 @@
 import Booking from '../model/booking.model.js';
+import Station from '../model/manageStation.model.js';  // your station model
 
-// Create a new booking
+/**
+ * Helper to resolve a station name to its ObjectId
+ */
+async function resolveStation(name) {
+  const station = await Station.findOne({ stationName: new RegExp(`^${name}$`, 'i') });
+  if (!station) throw new Error(`Station "${name}" not found`);
+  return station._id;
+}
+
+/** 
+ * View a single booking by its bookingId or _id
+ * GET /api/bookings/:id
+ */
+export const viewBooking = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const booking = await Booking.findOne({
+      $or: [{ bookingId: id }, { _id: id }]
+    })
+    .populate('startStation endStation', 'stationName')
+    .lean();
+
+    if (!booking) return res.status(404).json({ message: 'Booking not found' });
+    res.json(booking);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
+/** 
+ * Create a new booking
+ * POST /api/bookings
+ */
 export const createBooking = async (req, res) => {
   try {
-    const booking = new Booking(req.body);
+    const {
+      startStation: startName,
+      endStation: endName,
+      firstName,
+      lastName,
+      mobile,
+      email,
+      locality,
+      bookingDate,
+      deliveryDate,
+      senderName,
+      senderGgt,
+      senderLocality,
+      fromState,
+      fromCity,
+      senderPincode,
+      receiverName,
+      receiverGgt,
+      receiverLocality,
+      toState,
+      toCity,
+      toPincode,
+      receiptNo,
+      refNo,
+      insurance,
+      vppAmount,
+      toPay,
+      weight,
+      amount,
+      addComment,
+      freight,
+      ins_vpp,
+      cgst,
+      sgst,
+      igst,
+      billTotal,
+      grandTotal,
+      activeDelivery = false,
+      totalCancelled = 0
+    } = req.body;
+
+    const startStation = await resolveStation(startName);
+    const endStation   = await resolveStation(endName);
+
+    const booking = new Booking({
+      startStation, endStation,
+      firstName, lastName, mobile, email, locality,
+      bookingDate, deliveryDate,
+      senderName, senderGgt, senderLocality, fromState, fromCity, senderPincode,
+      receiverName, receiverGgt, receiverLocality, toState, toCity, toPincode,
+      receiptNo, refNo,
+      insurance, vppAmount, toPay, weight, amount, addComment,
+      freight, ins_vpp, cgst, sgst, igst, billTotal, grandTotal,
+      activeDelivery, totalCancelled
+    });
+
     await booking.save();
     res.status(201).json(booking);
-  } catch (error) {
-    res.status(400).json({ message: error.message });
+  } catch (err) {
+    console.error(err);
+    res.status(400).json({ message: err.message });
   }
 };
 
-// Get all bookings
-export const getBookings = async (req, res) => {
-  try {
-    const bookings = await Booking.find();
-    res.status(200).json(bookings);
-  } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
-};
-
-// Get a booking by ID
-export const getBookingById = async (req, res) => {
-  try {
-    const booking = await Booking.findById(req.params.id);
-    if (!booking) {
-      return res.status(404).json({ message: 'Booking not found' });
-    }
-    res.status(200).json(booking);
-  } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
-};
-
-// Update a booking by ID
+/** 
+ * Update a booking by its bookingId
+ * PUT /api/bookings/:id
+ */
 export const updateBooking = async (req, res) => {
   try {
-    const booking = await Booking.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    if (!booking) {
-      return res.status(404).json({ message: 'Booking not found' });
+    const { id } = req.params;
+    const updates = { ...req.body };
+
+    if (updates.startStation) {
+      updates.startStation = await resolveStation(updates.startStation);
     }
-    res.status(200).json(booking);
-  } catch (error) {
-    res.status(400).json({ message: error.message });
+    if (updates.endStation) {
+      updates.endStation = await resolveStation(updates.endStation);
+    }
+
+    const booking = await Booking.findOneAndUpdate(
+      { bookingId: id },
+      updates,
+      { new: true }
+    ).populate('startStation endStation', 'stationName');
+
+    if (!booking) return res.status(404).json({ message: 'Booking not found' });
+    res.json(booking);
+  } catch (err) {
+    console.error(err);
+    res.status(400).json({ message: err.message });
   }
 };
 
-// Delete a booking by ID
+/** 
+ * Soft-delete a booking by incrementing totalCancelled
+ * DELETE /api/bookings/:id
+ */
 export const deleteBooking = async (req, res) => {
   try {
-    const booking = await Booking.findByIdAndDelete(req.params.id);
-    if (!booking) {
-      return res.status(404).json({ message: 'Booking not found' });
+    const { id } = req.params;
+    // Mark as cancelled rather than remove
+    const booking = await Booking.findOneAndUpdate(
+      { bookingId: id },
+      { $inc: { totalCancelled: 1 }, activeDelivery: false },
+      { new: true }
+    );
+    if (!booking) return res.status(404).json({ message: 'Booking not found' });
+    res.json({ message: 'Booking cancelled successfully', booking });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
+/** 
+ * List bookings by “status”
+ * GET /api/bookings/booking-list?type=request|active|cancelled
+ */
+export const getBookingStatusList = async (req, res) => {
+  try {
+    const { type } = req.query;
+    let filter;
+
+    if (type === 'active') {
+      filter = { activeDelivery: true };
+    } else if (type === 'cancelled') {
+      filter = { totalCancelled: { $gt: 0 } };
+    } else { // request
+      filter = { activeDelivery: false, totalCancelled: 0 };
     }
-    res.status(200).json({ message: 'Booking deleted successfully' });
-  } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
-};
 
+    const bookings = await Booking.find(filter)
+      .select('bookingId firstName lastName senderName receiverName bookingDate mobile startStation endStation')
+      .populate('startStation endStation', 'stationName')
+      .lean();
 
-
-// Get count of active deliveries
-export const getActiveDeliveryCount = async (req, res) => {
-  try {
-    const activeDeliveriesCount = await Booking.countDocuments({ activeDelivery: true });
-    res.status(200).json({ activeDeliveriesCount });
-  } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
-};
-
-// Get list of active deliveries with specific fields
-export const getActiveDeliveries = async (req, res) => {
-  try {
-    // Fetch active deliveries
-    const activeDeliveries = await Booking.find({ activeDelivery: true })
-      .select('bookingId firstName lastName bookingDate startStation endStation activeDelivery') // Choose only required fields
-      .populate('startStation endStation', 'stationName') // Assuming 'stationName' is the field in the stations
-      .lean(); // Use lean to get plain JS objects
-
-    // Prepare response data with required fields
-    const formattedDeliveries = activeDeliveries.map((delivery, index) => ({
-      SNo: index + 1,
-      bookingId: delivery.bookingId,
-      orderBy: `${delivery.firstName} ${delivery.lastName}`,
-      date: delivery.bookingDate.toISOString().split('T')[0], // Formatting date as YYYY-MM-DD
-      name: `${delivery.firstName} ${delivery.lastName}`,
-      pickup: delivery.startStation.stationName,
-      drop: delivery.endStation.stationName,
-      status: delivery.activeDelivery ? 'Active' : 'Inactive', // Mapping status based on 'activeDelivery'
-      action: 'View', // Placeholder for action, can be customized
+    const data = bookings.map((b, i) => ({
+      SNo:      i + 1,
+      orderBy:  `${b.firstName} ${b.lastName}`,
+      date:     b.bookingDate.toISOString().slice(0,10),
+      fromName: b.senderName,
+      pickup:   b.startStation.stationName,
+      toName:   b.receiverName,
+      drop:     b.endStation.stationName,
+      status:   b.mobile,
+      action: {
+        view:   `/bookings/${b.bookingId}`,
+        edit:   `/bookings/edit/${b.bookingId}`,
+        delete: `/bookings/delete/${b.bookingId}`
+      }
     }));
 
-    res.status(200).json(formattedDeliveries);
-  } catch (error) {
-    res.status(400).json({ message: error.message });
+    res.json({ count: data.length, data });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: err.message });
   }
 };
-export const getBookingRequestCount = async (req, res) => {
-    try {
-      const bookingRequestsCount = await Booking.countDocuments({ activeDelivery: false }); // Assuming activeDelivery is false for requests
-      res.status(200).json({ bookingRequestsCount });
-    } catch (error) {
-      res.status(400).json({ message: error.message });
-    }
-  };
-  
-  // Get list of booking requests with specific fields
-  export const getBookingRequests = async (req, res) => {
-    try {
-      // Fetch booking requests where activeDelivery is false
-      const bookingRequests = await Booking.find({ activeDelivery: false })
-        .select('bookingId firstName lastName bookingDate startStation endStation activeDelivery') // Choose only required fields
-        .populate('startStation endStation', 'stationName') // Assuming 'stationName' is the field in the stations
-        .lean(); // Use lean to get plain JS objects
-  
-      // Prepare response data with required fields
-      const formattedRequests = bookingRequests.map((request, index) => ({
-        SNo: index + 1,
-        bookingId: request.bookingId,
-        orderBy: `${request.firstName} ${request.lastName}`,
-        date: request.bookingDate.toISOString().split('T')[0], // Formatting date as YYYY-MM-DD
-        name: `${request.firstName} ${request.lastName}`,
-        pickup: request.startStation.stationName,
-        drop: request.endStation.stationName,
-        status: request.activeDelivery ? 'Active' : 'Pending', // Mapping status based on 'activeDelivery'
-        action: 'Approve', // Placeholder for action, can be customized
-      }));
-  
-      res.status(200).json(formattedRequests);
-    } catch (error) {
-      res.status(400).json({ message: error.message });
-    }
-  };
+
+/** 
+ * Revenue list (only non-cancelled bookings)
+ * GET /api/bookings/revenue-list
+ */
+export const getBookingRevenueList = async (req, res) => {
+  try {
+    const bookings = await Booking.find({ totalCancelled: 0 })
+      .select('bookingId bookingDate startStation endStation grandTotal')
+      .populate('startStation endStation', 'stationName')
+      .lean();
+
+    const totalRevenue = bookings.reduce((sum, b) => sum + b.grandTotal, 0);
+
+    const data = bookings.map((b, i) => ({
+      SNo:       i + 1,
+      bookingId: b.bookingId,
+      date:      b.bookingDate.toISOString().slice(0,10),
+      pickup:    b.startStation.stationName,
+      drop:      b.endStation.stationName,
+      revenue:   b.grandTotal.toFixed(2),
+      action: {
+        view:   `/bookings/${b.bookingId}`,
+        edit:   `/bookings/edit/${b.bookingId}`,
+        delete: `/bookings/delete/${b.bookingId}`
+      }
+    }));
+
+    res.json({
+      totalRevenue: totalRevenue.toFixed(2),
+      count:        data.length,
+      data
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
+/** 
+ * Dashboard: cards + revenue table
+ * GET /api/bookings/revenue-dashboard
+ */
+export const getBookingRevenueDashboard = async (req, res) => {
+  try {
+    const [ bookingRequests, activeDeliveries, totalCancelled, bookings ] = await Promise.all([
+      Booking.countDocuments({ activeDelivery: false, totalCancelled: 0 }),
+      Booking.countDocuments({ activeDelivery: true }),
+      Booking.countDocuments({ totalCancelled: { $gt: 0 } }),
+      Booking.find({ totalCancelled: 0 })
+        .select('bookingId bookingDate startStation endStation grandTotal')
+        .populate('startStation endStation', 'stationName')
+        .lean()
+    ]);
+
+    const totalRevenue = bookings.reduce((sum, b) => sum + b.grandTotal, 0);
+
+    const table = bookings.map((b, i) => ({
+      SNo:       i + 1,
+      bookingId: b.bookingId,
+      date:      b.bookingDate.toISOString().slice(0,10),
+      pickup:    b.startStation.stationName,
+      drop:      b.endStation.stationName,
+      revenue:   b.grandTotal.toFixed(2),
+      action: {
+        view:   `/bookings/${b.bookingId}`,
+        edit:   `/bookings/edit/${b.bookingId}`,
+        delete: `/bookings/delete/${b.bookingId}`
+      }
+    }));
+
+    res.json({
+      cards: {
+        bookingRequests,
+        activeDeliveries,
+        totalCancelled,
+        totalRevenue: totalRevenue.toFixed(2)
+      },
+      table
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: err.message });
+  }
+};
