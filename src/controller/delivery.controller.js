@@ -132,3 +132,68 @@ export const finalizeDelivery = asyncHandler(async (req, res) => {
   }, "Delivery marked as final."));
 });
 
+export const countPendingDeliveries = asyncHandler(async (req, res) => {
+  const count = await Delivery.countDocuments({ status: { $ne: "Final Delivery" } });
+
+  res.status(200).json(new ApiResponse(200, { pendingDeliveries: count }, "Pending deliveries counted successfully."));
+});
+
+export const listPendingDeliveries = asyncHandler(async (req, res) => {
+  const deliveries = await Delivery.find({ status: { $ne: "Final Delivery" } })
+    .populate({
+      path: "bookingId",
+      select: "senderName receiverName startStation endStation",
+      populate: {
+        path: "startStation endStation",
+        select: "stationName"
+      }
+    })
+    .lean();
+
+  const data = deliveries.map((delivery, i) => ({
+    SNo: i + 1,
+    orderId: delivery.orderId,
+    senderName: delivery.bookingId?.senderName || "N/A",
+    receiverName: delivery.bookingId?.receiverName || "N/A",
+    startStation: delivery.bookingId?.startStation?.stationName || "N/A",
+    endStation: delivery.bookingId?.endStation?.stationName || "N/A",
+    status: delivery.status || "Pending",
+    action: {
+      markAsDelivered: `/api/delivery/finalize/${delivery.orderId}` // ✅ Using orderId here
+    }
+  }));
+
+  res.status(200).json(new ApiResponse(200, data, "Pending delivery list fetched successfully."));
+});
+
+export const countFinalDeliveries = asyncHandler(async (req, res) => {
+  const count = await Delivery.countDocuments({ status: "Final Delivery" });
+
+  res.status(200).json(new ApiResponse(200, { finalDeliveries: count }, "Final deliveries counted successfully."));
+});
+
+export const listFinalDeliveries = asyncHandler(async (req, res) => {
+  const deliveries = await Delivery.find({ status: "Final Delivery" })
+    .populate({
+      path: "bookingId",
+      select: "startStation endStation",
+      populate: {
+        path: "startStation endStation",
+        select: "stationName"
+      }
+    })
+    .populate("vehicleId", "vehicleName")
+    .lean();
+
+  const data = deliveries.map((delivery, i) => ({
+    SNo: i + 1,
+    orderId: delivery.orderId,
+    startStation: delivery.bookingId?.startStation?.stationName || "N/A",
+    endStation: delivery.bookingId?.endStation?.stationName || "N/A",
+    driverName: delivery.driverName || "N/A",
+    vehicle: delivery.vehicleId,
+  }));
+
+  res.status(200).json(new ApiResponse(200, data, "Final delivery list fetched successfully."));
+});
+
