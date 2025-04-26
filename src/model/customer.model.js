@@ -44,10 +44,12 @@ const customerSchema = new mongoose.Schema({
         unique:true
     },
     idProofPhoto:{
-        type:String
+        type:String,
+        required:true
     },
     customerProfilePhoto:{
-        type:String
+        type:String,
+        required:true
     },
     customerId: {
         type: String,

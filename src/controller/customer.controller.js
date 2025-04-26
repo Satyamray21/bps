@@ -16,6 +16,9 @@ const formatCustomerList = (customers) => {
 
 // CREATE Customer
 export const createCustomer = asyncHandler(async (req, res) => {
+  console.log("Request files:", req.files);
+console.log("Request body:", req.body);
+ 
   const {
     firstName,
     middleName,
@@ -31,15 +34,22 @@ export const createCustomer = asyncHandler(async (req, res) => {
     isBlacklisted = false,
   } = req.body;
 
+  // Validate required fields
   if ([firstName, lastName, emailId, address, state, city, idProof].some(field => typeof field === "string" && field.trim() === "")) {
     throw new ApiError(400, "All required fields must be provided.");
   }
 
+  // Check for existing email
   const existingCustomer = await Customer.findOne({ emailId });
   if (existingCustomer) {
     throw new ApiError(409, "Email is already registered.");
   }
 
+  // Handle file uploads
+  const idProofPhoto = req.files?.idProofPhoto?.[0]?.path || null;
+  const customerProfilePhoto = req.files?.customerProfilePhoto?.[0]?.path || null;
+
+  // Create new customer
   const customer = await Customer.create({
     firstName,
     middleName,
@@ -53,6 +63,8 @@ export const createCustomer = asyncHandler(async (req, res) => {
     idProof,
     status,
     isBlacklisted,
+    idProofPhoto,
+    customerProfilePhoto,
   });
 
   return res.status(201).json(new ApiResponse(201, "Customer created successfully", customer));

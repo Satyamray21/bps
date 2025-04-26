@@ -12,11 +12,22 @@ import {
   getActiveCustomers
 } from '../controller/customer.controller.js';
 import { parseFormData } from "../middleware/multerParser.middleware.js";
-
+import {upload} from "../middleware/multer.middleware.js";
+import { multerErrorHandler } from "../utils/multerErrorHandler.js";
 const router = Router();
 
 // Create a new customer
-router.post('/create', parseFormData, createCustomer);
+router.route("/create").post(
+  upload.fields([
+      {
+          name:"idProofPhoto",
+          maxCount :1
+      },{
+          name:"customerProfilePhoto",
+          maxCount:1
+      }
+  ]),multerErrorHandler ,
+  createCustomer)
 
 // Get all customers
 router.get('/all', getAllCustomers);
@@ -40,7 +51,7 @@ router.get('/blacklisted-list', getBlockedCustomers);
 router.get('/:customerId', getCustomerByCustomerId);
 
 // Update customer
-router.put('/update/:id', parseFormData, updateCustomer);
+router.put('/update/:id', upload.fields([{ name: 'idProofPhoto', maxCount: 1 }, { name: 'customerProfilePhoto', maxCount: 1 }]),updateCustomer);
 
 // Delete customer
 router.delete('/delete/:id', deleteCustomer);
