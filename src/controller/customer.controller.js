@@ -2,7 +2,7 @@ import { Customer } from "../model/customer.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-
+import fs from "fs/promises";
 // Helper function to format customer list
 const formatCustomerList = (customers) => {
   return customers.map((customer, index) => ({
@@ -66,6 +66,16 @@ console.log("Request body:", req.body);
     idProofPhoto,
     customerProfilePhoto,
   });
+  try {
+    if (idProofPhoto) {
+      await fs.unlink(idProofPhoto);
+    }
+    if (customerProfilePhoto) {
+      await fs.unlink(customerProfilePhoto);
+    }
+  } catch (error) {
+    console.error("Error deleting temp files:", error);
+  }
 
   return res.status(201).json(new ApiResponse(201, "Customer created successfully", customer));
 });
