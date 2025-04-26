@@ -1,9 +1,7 @@
 import Booking from '../model/booking.model.js';
-import Station from '../model/manageStation.model.js';  // your station model
+import Station from '../model/manageStation.model.js';  
 
-/**
- * Helper to resolve a station name to its ObjectId
- */
+
 async function resolveStation(name) {
   const station = await Station.findOne({ stationName: new RegExp(`^${name}$`, 'i') });
   if (!station) throw new Error(`Station "${name}" not found`);
@@ -40,42 +38,13 @@ export const createBooking = async (req, res) => {
     const {
       startStation: startName,
       endStation: endName,
-      firstName,
-      lastName,
-      mobile,
-      email,
-      locality,
-      bookingDate,
-      deliveryDate,
-      senderName,
-      senderGgt,
-      senderLocality,
-      fromState,
-      fromCity,
-      senderPincode,
-      receiverName,
-      receiverGgt,
-      receiverLocality,
-      toState,
-      toCity,
-      toPincode,
-      receiptNo,
-      refNo,
-      insurance,
-      vppAmount,
-      toPay,
-      weight,
-      amount,
-      addComment,
-      freight,
-      ins_vpp,
-      cgst,
-      sgst,
-      igst,
-      billTotal,
-      grandTotal,
-      activeDelivery = false,
-      totalCancelled = 0
+      firstName, lastName, mobile, email, locality,
+      bookingDate, deliveryDate,
+      senderName, senderGgt, senderLocality, fromState, fromCity, senderPincode,
+      receiverName, receiverGgt, receiverLocality, toState, toCity, toPincode,
+      receiptNo, refNo,
+      insurance, vppAmount, toPay, weight, amount, addComment,
+      freight, ins_vpp, cgst, sgst, igst, billTotal, grandTotal
     } = req.body;
 
     const startStation = await resolveStation(startName);
@@ -89,8 +58,7 @@ export const createBooking = async (req, res) => {
       receiverName, receiverGgt, receiverLocality, toState, toCity, toPincode,
       receiptNo, refNo,
       insurance, vppAmount, toPay, weight, amount, addComment,
-      freight, ins_vpp, cgst, sgst, igst, billTotal, grandTotal,
-      activeDelivery, totalCancelled
+      freight, ins_vpp, cgst, sgst, igst, billTotal, grandTotal
     });
 
     await booking.save();
@@ -132,13 +100,12 @@ export const updateBooking = async (req, res) => {
 };
 
 /** 
- * Soft-delete a booking by incrementing totalCancelled
+ * Soft-delete (cancel) a booking by incrementing totalCancelled and turning off activeDelivery
  * DELETE /api/bookings/:id
  */
 export const deleteBooking = async (req, res) => {
   try {
     const { id } = req.params;
-    // Mark as cancelled rather than remove
     const booking = await Booking.findOneAndUpdate(
       { bookingId: id },
       { $inc: { totalCancelled: 1 }, activeDelivery: false },
@@ -165,9 +132,11 @@ export const getBookingStatusList = async (req, res) => {
       filter = { activeDelivery: true };
     } else if (type === 'cancelled') {
       filter = { totalCancelled: { $gt: 0 } };
-    } else { // request
+    } else {
+      // request = neither active nor cancelled
       filter = { activeDelivery: false, totalCancelled: 0 };
     }
+    
 
     const bookings = await Booking.find(filter)
       .select('bookingId firstName lastName senderName receiverName bookingDate mobile startStation endStation')
@@ -182,7 +151,7 @@ export const getBookingStatusList = async (req, res) => {
       pickup:   b.startStation.stationName,
       toName:   b.receiverName,
       drop:     b.endStation.stationName,
-      status:   b.mobile,
+      contact:  b.mobile,
       action: {
         view:   `/bookings/${b.bookingId}`,
         edit:   `/bookings/edit/${b.bookingId}`,
@@ -197,10 +166,7 @@ export const getBookingStatusList = async (req, res) => {
   }
 };
 
-/** 
- * Revenue list (only non-cancelled bookings)
- * GET /api/bookings/revenue-list
- */
+
 export const getBookingRevenueList = async (req, res) => {
   try {
     const bookings = await Booking.find({ totalCancelled: 0 })
@@ -235,13 +201,15 @@ export const getBookingRevenueList = async (req, res) => {
   }
 };
 
-/** 
- * Dashboard: cards + revenue table
- * GET /api/bookings/revenue-dashboard
- */
+
 export const getBookingRevenueDashboard = async (req, res) => {
   try {
-    const [ bookingRequests, activeDeliveries, totalCancelled, bookings ] = await Promise.all([
+    const [
+      bookingRequests,
+      activeDeliveries,
+      cancelledCount,
+      bookings
+    ] = await Promise.all([
       Booking.countDocuments({ activeDelivery: false, totalCancelled: 0 }),
       Booking.countDocuments({ activeDelivery: true }),
       Booking.countDocuments({ totalCancelled: { $gt: 0 } }),
@@ -271,7 +239,7 @@ export const getBookingRevenueDashboard = async (req, res) => {
       cards: {
         bookingRequests,
         activeDeliveries,
-        totalCancelled,
+        cancelledCount,
         totalRevenue: totalRevenue.toFixed(2)
       },
       table
@@ -281,3 +249,25 @@ export const getBookingRevenueDashboard = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+// PATCH /api/v2/bookings/:id/activate
+export const activateBooking = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const booking = await Booking.findOneAndUpdate(
+      { bookingId: id },
+      { activeDelivery: true },
+      { new: true }
+    );
+
+    if (!booking) {
+      return res.status(404).json({ message: 'Booking not found' });
+    }
+
+    res.json({ message: 'Booking marked as active delivery', booking });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: error.message });
+  }
+};
+

@@ -6,7 +6,8 @@ import {
   deleteBooking, 
   getBookingStatusList, 
   getBookingRevenueList, 
-  getBookingRevenueDashboard 
+  getBookingRevenueDashboard ,
+  activateBooking
 } from '../controller/booking.controller.js';
 
 const router = express.Router();
@@ -17,8 +18,9 @@ router.get('/revenue-dashboard', getBookingRevenueDashboard);
 
 // ✅ CRUD routes AFTER static routes
 router.post('/', createBooking);           // Create a new booking
+router.patch('/:id/activate', activateBooking);
 router.get('/:id', viewBooking);           // View by bookingId (not _id!)
 router.put('/:id', updateBooking);         // Update by bookingId
-router.delete('/:id', deleteBooking);                   // Delete by bookingId
+router.delete('/:id', deleteBooking);      // Delete by bookingId
 
 export default router;
