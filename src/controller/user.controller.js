@@ -2,15 +2,46 @@ import { User } from "../model/user.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-
+import fs from "fs/promises"
 // Register a new user
 export const registerUser = asyncHandler(async (req, res) => {
   try {
+    console.log("Req body",req.body);
+    console.log("Req file",req.files);
     if (req.body.role === 'admin' && req.body.isBlacklisted === true) {
       throw new ApiError(400, "Admin users cannot be blacklisted");
     }
-    const user = new User(req.body);
+    let userData = { ...req.body };
+
+    
+    if (req.files) {
+      if (req.files['idProofPhoto']) {
+        userData.idProofPhoto = req.files['idProofPhoto'][0].path; // File path
+      }
+      if (req.files['adminProfilePhoto']) {
+        userData.adminProfilePhoto = req.files['adminProfilePhoto'][0].path; // File path
+      }
+    }
+
+   
+    if (!userData.idProofPhoto || !userData.adminProfilePhoto) {
+      throw new ApiError(400, "Both idProofPhoto and adminProfilePhoto are required.");
+    }
+
+    const user = new User(userData);
     await user.save();
+    try {
+              if (userData.idProofPhoto) {
+                await fs.unlink(userData.idProofPhoto);
+              }
+              if(userData.adminProfilePhoto)
+              {
+                await fs.unlink(userData.adminProfilePhoto);
+              }
+              
+            } catch (error) {
+              console.error("Error deleting temp files:", error);
+            }
     res.status(201).json(new ApiResponse(201, "User registered successfully", user));
   } catch (error) {
     console.log("error message",error.message);
@@ -53,15 +84,51 @@ export const getUserById = asyncHandler(async (req, res) => {
 // Update user by ID
 export const updateUser = asyncHandler(async (req, res) => {
   try {
-    const user = await User.findByIdAndUpdate(req.params.id, req.body, {
+    let updatedData = { ...req.body };
+
+    // Fetch current user data (to delete old photos if needed)
+    const existingUser = await User.findById(req.params.id);
+    if (!existingUser) {
+      throw new ApiError(404, "User not found");
+    }
+
+    // If new files are uploaded
+    if (req.files) {
+      if (req.files['idProofPhoto']) {
+        // Delete old idProofPhoto if exists
+        if (existingUser.idProofPhoto) {
+          try {
+            await fs.unlink(existingUser.idProofPhoto);
+          } catch (unlinkError) {
+            console.error("Error deleting old idProofPhoto:", unlinkError);
+          }
+        }
+        // Save new file path
+        updatedData.idProofPhoto = req.files['idProofPhoto'][0].path;
+      }
+
+      if (req.files['adminProfilePhoto']) {
+        // Delete old adminProfilePhoto if exists
+        if (existingUser.adminProfilePhoto) {
+          try {
+            await fs.unlink(existingUser.adminProfilePhoto);
+          } catch (unlinkError) {
+            console.error("Error deleting old adminProfilePhoto:", unlinkError);
+          }
+        }
+        // Save new file path
+        updatedData.adminProfilePhoto = req.files['adminProfilePhoto'][0].path;
+      }
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(req.params.id, updatedData, {
       new: true,
       runValidators: true,
     });
-    if (!user) {
-      throw new ApiError(404, "User not found");
-    }
-    res.status(200).json(new ApiResponse(200, "User updated successfully", user));
+
+    res.status(200).json(new ApiResponse(200, "User updated successfully", updatedUser));
   } catch (error) {
+    console.error("Update user error:", error.message);
     throw new ApiError(400, error.message);
   }
 });

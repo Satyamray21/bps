@@ -15,17 +15,36 @@ import {
   getBlacklistedSupervisorsList,
 } from "../controller/user.controller.js";
 
-import { parseFormData } from "../middleware/multerParser.middleware.js";
 
+import {upload} from "../middleware/multer.middleware.js"
+import { multerErrorHandler } from "../utils/multerErrorHandler.js";
 const router = express.Router();
 
 // Register user
-router.post("/register", parseFormData, registerUser);
+router.route("/register").post(upload.fields([
+      {
+          name:"idProofPhoto",
+          maxCount :1
+      },
+      {
+        name:"adminProfilePhoto",
+        maxCount :1 
+      }
+    ]),multerErrorHandler,registerUser);
 
 // Admin user CRUD
 router.get("/admin/users", getAllUsersForAdmin);
 router.get("/admin/user/:id", getUserById);
-router.put("/admin/user/:id", updateUser);
+router.route("/admin/user/:id").put(upload.fields([
+  {
+      name:"idProofPhoto",
+      maxCount :1
+  },
+  {
+    name:"adminProfilePhoto",
+    maxCount :1 
+  }
+]),multerErrorHandler,updateUser);
 router.delete("/admin/user/:id", deleteUser);
 
 // Admin user counts

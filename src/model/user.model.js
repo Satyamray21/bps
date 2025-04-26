@@ -50,9 +50,11 @@ const UserSchema = new mongoose.Schema(
     },
     idProofPhoto: {
       type: String,
+      required:true,
     },
     adminProfilePhoto: {
       type: String,
+      required:true
     },
     role: {
       type: String,
