@@ -93,7 +93,7 @@ export const assignDelivery = asyncHandler(async (req, res) => {
 
 // List all Booking Deliveries
 export const listBookingDeliveries = asyncHandler(async (req, res) => {
-  const deliveries = await Delivery.find({ deliveryType: "Booking" })
+  const deliveries = await Delivery.find({ deliveryType: "Booking",status: { $ne: "Final Delivery" } })
   .populate([
     { path: "vehicleId", select: "vehicleName" },
     { path: "bookingId", populate: [
@@ -121,7 +121,7 @@ export const listBookingDeliveries = asyncHandler(async (req, res) => {
 
 // List all Quotation Deliveries
 export const listQuotationDeliveries = asyncHandler(async (req, res) => {
-  const deliveries = await Delivery.find({ deliveryType: "Quotation" })
+  const deliveries = await Delivery.find({ deliveryType: "Quotation" ,status: { $ne: "Final Delivery" }})
     .lean()  // optimize performance with lean queries
     .populate({
       path: "quotationId",
@@ -176,13 +176,43 @@ export const finalizeDelivery = asyncHandler(async (req, res) => {
 
 // Count Deliveries
 export const countBookingDeliveries = asyncHandler(async (req, res) => {
-  const count = await Delivery.countDocuments({ deliveryType: "Booking" });
+  const count = await Delivery.countDocuments({ deliveryType: "Booking",status: { $ne: "Final Delivery" } });
 
   res.status(200).json(new ApiResponse(200, { count }, "Booking deliveries count fetched successfully."));
 });
 
 export const countQuotationDeliveries = asyncHandler(async (req, res) => {
-  const count = await Delivery.countDocuments({ deliveryType: "Quotation" });
+  const count = await Delivery.countDocuments({ deliveryType: "Quotation",status: { $ne: "Final Delivery" } });
 
   res.status(200).json(new ApiResponse(200, { count }, "Quotation deliveries count fetched successfully."));
+});
+export const countFinalDeliveries = asyncHandler(async (req, res) => {
+  const count = await Delivery.countDocuments({ status: "Final Delivery" });
+
+  res.status(200).json(new ApiResponse(200, { finalDeliveries: count }, "Final deliveries counted successfully."));
+});
+
+export const listFinalDeliveries = asyncHandler(async (req, res) => {
+  const deliveries = await Delivery.find({ status: "Final Delivery" })
+    .populate({
+      path: "bookingId",
+      select: "startStation endStation",
+      populate: {
+        path: "startStation endStation",
+        select: "stationName"
+      }
+    })
+    .populate("vehicleId", "vehicleName")
+    .lean();
+
+  const data = deliveries.map((delivery, i) => ({
+    SNo: i + 1,
+    orderId: delivery.orderId,
+    startStation: delivery.bookingId?.startStation?.stationName || "N/A",
+    endStation: delivery.bookingId?.endStation?.stationName || "N/A",
+    driverName: delivery.driverName || "N/A",
+    vehicle: delivery.vehicleId,
+  }));
+
+  res.status(200).json(new ApiResponse(200, data, "Final delivery list fetched successfully."));
 });
