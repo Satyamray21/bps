@@ -1,20 +1,25 @@
 
 import express from "express";
 import { createExpense, getAllExpenses, getExpenseByNo, updateExpenseByNo, deleteExpenseByNo } from "../controller/expense.controller.js";
-import { parseFormData } from "../middleware/multerParser.middleware.js"
+import { upload } from "../middleware/multer.middleware.js";
+import { multerErrorHandler } from "../utils/multerErrorHandler.js";
 const router = express.Router();
 
 
-router.post("/createexpenses", parseFormData,createExpense);
+router.route("/createExpenses").post(upload.fields([
+      {
+          name:"document",
+          maxCount :1
+      }]),multerErrorHandler,createExpense);
 
 
-router.get("/getexpenses", getAllExpenses);
+router.get("/getExpenses", getAllExpenses);
 
 
 router.get("/expense/:invoiceNo", getExpenseByNo);
 
 
-router.put("/expense/:invoiceNo", parseFormData,updateExpenseByNo);
+router.put("/expense/:invoiceNo", updateExpenseByNo);
 
 
 router.delete("/expense/:invoiceNo", deleteExpenseByNo);

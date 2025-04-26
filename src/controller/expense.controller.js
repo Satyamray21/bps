@@ -3,10 +3,10 @@ import { Expense } from "../model/expense.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-
+import fs from "fs/promises";
 const formatDate = (date) => {
     const d = new Date(date);
-    return d.toISOString().split("T")[0]; // returns "2025-04-25"
+    return d.toISOString().split("T")[0]; 
   };
 
 export const createExpense = asyncHandler(async (req, res) => {
@@ -16,7 +16,7 @@ export const createExpense = asyncHandler(async (req, res) => {
   if ([title, date, invoiceNo, details, amount, taxAmount, totalAmount].some(field => !field || field.trim() === "")) {
     throw new ApiError(400, "All fields are required");
   }
-
+  const document = req.files?.document?.[0]?.path || null;
   
   const existingExpense = await Expense.findOne({ invoiceNo });
   if (existingExpense) {
@@ -24,7 +24,15 @@ export const createExpense = asyncHandler(async (req, res) => {
   }
 
   
-  const expense = await Expense.create({ title, date, invoiceNo, details, amount, taxAmount, totalAmount });
+  const expense = await Expense.create({ title, date, invoiceNo, details, amount, taxAmount, totalAmount ,document});
+  try {
+          if (document) {
+            await fs.unlink(document);
+          }
+          
+        } catch (error) {
+          console.error("Error deleting temp files:", error);
+        }
 
   return res.status(201).json(new ApiResponse(201, "Expense created successfully", expense));
 });
@@ -39,6 +47,7 @@ export const getAllExpenses = asyncHandler(async (req, res) => {
     date: formatDate(expense.date),
     name: expense.title,
     taxableAmount: expense.amount,
+    receiving:expense.document,
     total: expense.totalAmount,
 
     action: [
