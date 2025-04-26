@@ -104,11 +104,17 @@ export const getDeliveries = asyncHandler(async (req, res) => {
 
 // Finalize Delivery
 export const finalizeDelivery = asyncHandler(async (req, res) => {
-  const { deliveryId } = req.params;
+  const { orderId } = req.params; // 💬 Now getting orderId from params
 
-  const delivery = await Delivery.findById(deliveryId);
+  // Find delivery based on orderId, not _id
+  const delivery = await Delivery.findOne({ orderId: orderId });
+
   if (!delivery) {
-    throw new ApiError(404, "Delivery not found.");
+    throw new ApiError(404, "Delivery not found with this Order ID.");
+  }
+
+  if (delivery.status === "Final Delivery") {
+    throw new ApiError(400, "Delivery is already finalized.");
   }
 
   delivery.status = "Final Delivery";
@@ -125,3 +131,4 @@ export const finalizeDelivery = asyncHandler(async (req, res) => {
     status: "Final Delivery",
   }, "Delivery marked as final."));
 });
+

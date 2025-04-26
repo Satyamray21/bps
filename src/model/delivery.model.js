@@ -17,8 +17,13 @@ const deliverySchema = new mongoose.Schema({
   },
   vehicleId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Vehicle", // Reference to the Vehicle model, if you need it
+    ref: "Vehicle", 
     required: true,
+  },
+  status: {
+    type: String,
+    enum: ["Pending", "Final Delivery"], 
+    default: "Pending",
   },
 }, {
   timestamps: true,
