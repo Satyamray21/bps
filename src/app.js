@@ -21,7 +21,7 @@ app.use(express.urlencoded(
 ))
 app.use(express.static("public"));
 app.use(cookieParser());
-const authExemptRoutes = ['/api/v4/users/login', '/api/v4/users/register'];
+const authExemptRoutes = ['/api/v2/users/login', '/api/v4/users/register'];
 app.use((req, res, next) => {
     if (!authExemptRoutes.includes(req.originalUrl)) {
       verifyJwt(req, res, next);  // Apply JWT verification to all routes except exempt ones
@@ -36,7 +36,7 @@ app.use("/api/v2/driver",driverRouter);
 import CustomerRouter from "./router/customer.route.js"
 app.use("/api/v2/customers",CustomerRouter);
 import userRouter from "./router/user.route.js"
-app.use("/api/v4/users",userRouter)
+app.use("/api/v2/users",userRouter)
 import vehicleRouter from "./router/vehicle.router.js"
 app.use("/api/v2/vehicles",vehicleRouter)
 import customerQuotation from "./router/customerQuotation.router.js"
@@ -53,5 +53,9 @@ app.use("/api/v2/bookings",bookingRouter);
 
 import deliveryRouter from "./router/delivery.router.js"
 app.use("/api/v2/delivery",deliveryRouter);
+
+
+import trackerRouter from "./router/tracker.router.js"
+app.use("/api/v2/tracking",trackerRouter);
 
 export {app}
