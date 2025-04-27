@@ -16,9 +16,6 @@ const customerLedgerSchema = new mongoose.Schema({
     required: true,
     enum: ["Booking", "CustomerQuotation"],
   },
-  date: {
-    type: Date,
-  },
   amount: {
     type: Number,
     required: true,

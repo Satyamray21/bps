@@ -101,3 +101,54 @@ export const updateLedgerEntry = asyncHandler(async (req, res) => {
   await ledger.save();
   res.status(200).json(new ApiResponse(200, ledger, "Ledger entry updated successfully."));
 });
+
+//customer history
+
+
+// Get all ledger entries with formatted history
+export const getAllLedgerWithHistory = asyncHandler(async (req, res) => {
+    const ledgerEntries = await CustomerLedger.find().populate('orderRef'); 
+  
+    if (!ledgerEntries) {
+      throw new ApiError(404, "No ledger entries found.");
+    }
+  
+    const formattedEntries = await Promise.all(ledgerEntries.map(async (entry, index) => {
+      const order = entry.orderRef;
+      let orderDetails = {};
+  
+      if (entry.orderType === "Booking") {
+        orderDetails = {
+          bookingId: order.bookingId,
+          date: order.date,
+          name: order.senderName, // Customer name from Booking model
+          order: "Booking",
+        };
+      } else if (entry.orderType === "Quotation") {
+        orderDetails = {
+          bookingId: order.bookingId,
+          date: order.quotationDate, // Date from Quotation model
+          name: order.customerName, // Customer name from Quotation model
+          order: "Quotation",
+        };
+      }
+  
+      const invoiceId = `BHPAR${Math.floor(Math.random() * 1000)}INVO`; // Generate random invoice ID
+  
+      return {
+        sNo: index + 1,
+        invoiceId: invoiceId,
+        bookingId: orderDetails.bookingId,
+        date: orderDetails.date,
+        name: orderDetails.name,
+        order: orderDetails.order,
+        amount: entry.amount,
+        paidAmount: entry.amount - entry.remainingAmount,
+        remainingAmount: entry.remainingAmount,
+        invoiceLink: `/invoice/${invoiceId}`, // Link to view invoice
+      };
+    }));
+  
+    res.status(200).json(new ApiResponse(200, formattedEntries, "Ledger entries with history fetched successfully."));
+  });
+  
