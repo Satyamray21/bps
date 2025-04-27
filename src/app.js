@@ -59,7 +59,7 @@ import trackerRouter from "./router/tracker.router.js"
 app.use("/api/v2/tracking",trackerRouter);
 
 
-import customerLedgerRouter from "./router/customerLedger.router.js"
-app.use("/api/v2/customerLedger",customerLedgerRouter);
+import customerLedgerRouter from "./router/customerLedgerHistory.router.js"
+app.use("/api/v2/ledger",customerLedgerRouter);
 
 export {app}
