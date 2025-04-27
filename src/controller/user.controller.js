@@ -90,8 +90,21 @@ export const loginUser = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Login failed", error.message);
   }
 });
+// Logout User
+export const logoutUser = asyncHandler(async (req, res) => {
+  try {
+    // Clear the access token from cookies
+    res.clearCookie("accessToken", { httpOnly: true, secure: process.env.NODE_ENV === "production" });
 
-// Get all users for admin (with formatted data)
+    // Send response
+    res.status(200).json(new ApiResponse(200, "User logged out successfully"));
+  } catch (error) {
+    console.error("Logout error:", error.message);
+    throw new ApiError(500, "Logout failed", error.message);
+  }
+});
+
+// Get all users for admin 
 export const getAllUsersForAdmin = asyncHandler(async (req, res) => {
   try {
     const users = await User.find().select("userId firstName lastName contactNumber");

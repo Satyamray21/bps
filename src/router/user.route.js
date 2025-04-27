@@ -14,6 +14,7 @@ import {
   loginUser,
   getDeactivatedSupervisorsList,
   getBlacklistedSupervisorsList,
+  logoutUser
 } from "../controller/user.controller.js";
 
 import { verifyJwt } from "../middleware/auth.middleware.js";
@@ -36,6 +37,7 @@ router.route("/register").post(upload.fields([
     router.get("/protected", verifyJwt, (req, res) => {
       res.status(200).json({ message: "This is a protected route" });
     });
+    router.route("/logout").post(verifyJwt,logoutUser)
 // Admin user CRUD
 router.get("/admin/users", getAllUsersForAdmin);
 router.get("/admin/user/:id", getUserById);

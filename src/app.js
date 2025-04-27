@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import { verifyJwt } from "./middleware/auth.middleware.js";
 const app = express()
 app.use(cors({
     origin : process.env.CORS_ORIGIN,
@@ -20,7 +21,14 @@ app.use(express.urlencoded(
 ))
 app.use(express.static("public"));
 app.use(cookieParser());
-
+const authExemptRoutes = ['/api/v4/users/login', '/api/v4/users/register'];
+app.use((req, res, next) => {
+    if (!authExemptRoutes.includes(req.originalUrl)) {
+      verifyJwt(req, res, next);  // Apply JWT verification to all routes except exempt ones
+    } else {
+      next();  // Skip JWT verification for login/register routes
+    }
+  });
 import manageStation from "./router/manageStation.router.js"
 app.use("/api/v2/stations",manageStation);
 import driverRouter from "./router/driver.route.js"
