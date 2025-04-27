@@ -2,7 +2,10 @@ import { User } from "../model/user.model.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
-import fs from "fs/promises"
+import fs from "fs/promises";
+import jwt from "jsonwebtoken";  // Ensure this line is present
+
+import bcrypt from "bcrypt"
 // Register a new user
 export const registerUser = asyncHandler(async (req, res) => {
   try {
@@ -46,6 +49,45 @@ export const registerUser = asyncHandler(async (req, res) => {
   } catch (error) {
     console.log("error message",error.message);
     throw new ApiError(400, "Registration failed", error.message);
+  }
+});
+export const loginUser = asyncHandler(async (req, res) => {
+  try {
+    const { emailId, password } = req.body;
+
+    // Check if email is provided
+    if (!emailId || !password) {
+      throw new ApiError(400, "Email and password are required");
+    }
+
+    // Find the user by email
+    const user = await User.findOne({ emailId }).select("+password");
+    if (!user) {
+      throw new ApiError(401, "Invalid email or password");
+    }
+
+    // Check if password is correct
+    const isPasswordCorrect = await bcrypt.compare(password, user.password);
+    if (!isPasswordCorrect) {
+      throw new ApiError(401, "Invalid email or password");
+    }
+
+    // Generate a JWT token
+    const token = jwt.sign(
+      { adminId: user.adminId, userId: user._id }, // payload
+      process.env.ACCESS_TOKEN_SECRET, // secret key from env
+      { expiresIn: "1h" } // token expiration
+    );
+
+    // Set the token in the cookies (optional, if you want to use cookies for storing the token)
+    res.cookie("accessToken", token, { httpOnly: true, secure: process.env.NODE_ENV === "production", maxAge: 3600000 }); // 1 hour
+
+    // Respond with success and token
+    res.status(200).json(new ApiResponse(200, "Login successful", { token }));
+
+  } catch (error) {
+    console.log("Login error:", error.message);
+    throw new ApiError(400, "Login failed", error.message);
   }
 });
 
@@ -173,14 +215,13 @@ export const countDeactivatedSupervisors = asyncHandler(async (req, res) => {
 // Get list of all supervisors
 export const getSupervisorsList = asyncHandler(async (req, res) => {
   try {
-    const supervisors = await User.find({ role: 'supervisor' }).select("userId firstName lastName contactNumber");
+    const supervisors = await User.find({ role: 'supervisor' }).select("adminId firstName lastName contactNumber");
 
     const formattedSupervisors = supervisors.map((supervisor, index) => ({
       sNo: index + 1,
-      supervisorId: supervisor.userId,
+      supervisorId: supervisor.adminId,
       name: `${supervisor.firstName} ${supervisor.lastName}`,
       contact: supervisor.contactNumber,
-      userId: supervisor._id,
     }));
 
     res.status(200).json(new ApiResponse(200, "Supervisors fetched successfully", formattedSupervisors));
@@ -192,21 +233,30 @@ export const getSupervisorsList = asyncHandler(async (req, res) => {
 // Get list of all admins
 export const getAdminsList = asyncHandler(async (req, res) => {
   try {
-    const admins = await User.find({ role: 'admin' }).select("userId firstName lastName contactNumber");
+    const admins = await User.find({ role: 'admin' }).select("adminId firstName lastName contactNumber");
 
-    const formattedAdmins = admins.map((admin, index) => ({
-      sNo: index + 1,
-      adminId: admin.userId,
-      name: `${admin.firstName} ${admin.lastName}`,
-      contact: admin.contactNumber,
-      userId: admin._id,
-    }));
+    const formattedAdmins = admins.map((admin, index) => {
+      console.log("Fetched Admin:", {
+        index: index + 1,
+        adminId: admin.adminId,
+        name: `${admin.firstName} ${admin.lastName}`,
+        contact: admin.contactNumber,
+      });
+
+      return {
+        "S.No": index + 1,
+        "Super admin Id": admin.adminId,
+        name: `${admin.firstName} ${admin.lastName}`,
+        contact: admin.contactNumber,
+      };
+    });
 
     res.status(200).json(new ApiResponse(200, "Admins fetched successfully", formattedAdmins));
   } catch (error) {
     throw new ApiError(500, "Error fetching admins", error.message);
   }
 });
+
 
 // Get list of deactivated supervisors
 export const getDeactivatedSupervisorsList = asyncHandler(async (req, res) => {

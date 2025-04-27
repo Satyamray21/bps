@@ -11,11 +11,12 @@ import {
   countDeactivatedSupervisors,
   getSupervisorsList,
   getAdminsList,
+  loginUser,
   getDeactivatedSupervisorsList,
   getBlacklistedSupervisorsList,
 } from "../controller/user.controller.js";
 
-
+import { verifyJwt } from "../middleware/auth.middleware.js";
 import {upload} from "../middleware/multer.middleware.js"
 import { multerErrorHandler } from "../utils/multerErrorHandler.js";
 const router = express.Router();
@@ -31,7 +32,10 @@ router.route("/register").post(upload.fields([
         maxCount :1 
       }
     ]),multerErrorHandler,registerUser);
-
+    router.post("/login", loginUser);
+    router.get("/protected", verifyJwt, (req, res) => {
+      res.status(200).json({ message: "This is a protected route" });
+    });
 // Admin user CRUD
 router.get("/admin/users", getAllUsersForAdmin);
 router.get("/admin/user/:id", getUserById);
