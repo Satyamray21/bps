@@ -1,4 +1,4 @@
-// model/delivery.model.js
+
 
 import mongoose from 'mongoose';
 

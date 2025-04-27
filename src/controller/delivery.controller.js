@@ -2,7 +2,7 @@
 
 import { asyncHandler } from "../utils/asyncHandler.js";
 import Booking from "../model/booking.model.js";
-import Quotation from "../model/customerQuotation.model.js"; // 🛠️ added this line
+import Quotation from "../model/customerQuotation.model.js"; 
 import Delivery from "../model/delivery.model.js";
 import { Vehicle } from "../model/vehicle.model.js";
 import { ApiError } from "../utils/ApiError.js";
@@ -22,10 +22,10 @@ const generateOrderId = () => {
 const populateVehicleAndBooking = (query) => {
   return query.populate({
     path: "bookingId",
-    select: "senderName receiverName startStation endStation", // Select necessary fields from Booking
+    select: "senderName receiverName startStation endStation", 
     populate: {
       path: "startStation endStation",
-      select: "stationName", // Select stationName from start and end stations
+      select: "stationName", 
     },
   }).populate("vehicleId", "vehicleName"); // Populate Vehicle information with vehicleName
 };

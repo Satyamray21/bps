@@ -182,7 +182,7 @@ export const getBlacklistedVehiclesCount = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, "Blacklisted vehicles count fetched successfully", { blacklistedVehicles }));
 });
 
-// GET Blacklisted Vehicles (List with sNo)
+// GET Blacklisted Vehicles (List 
 export const getBlacklistedVehicles = asyncHandler(async (req, res) => {
   const blacklistedVehicles = await Vehicle.find({
     isBlacklisted: true
@@ -197,7 +197,7 @@ export const getBlacklistedVehicles = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, "Blacklisted vehicles fetched successfully", { blacklistedVehicles: result }));
 });
 
-// GET Deactivated Vehicles (List with sNo)
+// GET Deactivated Vehicles (List )
 export const getDeactivatedVehicles = asyncHandler(async (req, res) => {
   const deactivatedVehicles = await Vehicle.find({
     isActive: false
@@ -212,7 +212,7 @@ export const getDeactivatedVehicles = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, "Deactivated vehicles fetched successfully", { deactivatedVehicles: result }));
 });
 
-// GET Available Vehicles (List with sNo)
+// GET Available Vehicles (List )
 export const getAvailableVehicles = asyncHandler(async (req, res) => {
   const availableVehicles = await Vehicle.find({
     isActive: true,

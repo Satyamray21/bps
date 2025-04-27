@@ -4,7 +4,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
  import fs from "fs/promises";
 
-// 🔥 Helper function to format driver list
+// Helper function to format driver list
 const formatDriverList = (drivers) => {
     return drivers.map((driver, index) => ({
         sNo: index + 1,
@@ -21,7 +21,7 @@ const formatDriverList = (drivers) => {
     }));
 };
 
-// ➡️ Create Driver
+// Create Driver
 export const createDriver = asyncHandler(async (req, res) => {
     const {
         firstName,
@@ -85,14 +85,14 @@ export const createDriver = asyncHandler(async (req, res) => {
     return res.status(201).json(new ApiResponse(201, "Driver created successfully", driver));
 });
 
-// ➡️ Get All Drivers (Formatted)
+// Get All Drivers (Formatted forntend data )
 export const getAllDrivers = asyncHandler(async (req, res) => {
     const drivers = await Driver.find();
     const driverList = formatDriverList(drivers);
     return res.status(200).json(new ApiResponse(200, "All drivers fetched successfully", driverList));
 });
 
-// ➡️ Get Available Drivers (Formatted)
+// Get Available Drivers (Formatted data)
 export const getAvailableDrivers = asyncHandler(async (req, res) => {
     const drivers = await Driver.find({ isAvailable: true, isBlacklisted: false });
     const driverList = formatDriverList(drivers);
@@ -168,7 +168,7 @@ export const updateDriverStatus = asyncHandler(async (req, res) => {
     return res.status(200).json(new ApiResponse(200, "Driver status updated", driver));
 });
 
-
+// delete krne k liye
 export const deleteDriver = asyncHandler(async (req, res) => {
     const deletedDriver = await Driver.findByIdAndDelete(req.params.id);
     if (!deletedDriver) {

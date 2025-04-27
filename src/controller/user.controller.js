@@ -3,7 +3,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import { ApiError } from "../utils/ApiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import fs from "fs/promises";
-import jwt from "jsonwebtoken";  // Ensure this line is present
+import jwt from "jsonwebtoken";  
 
 import bcrypt from "bcrypt"
 // Register a new user

@@ -69,10 +69,7 @@ export const createBooking = async (req, res) => {
   }
 };
 
-/** 
- * Update a booking by its bookingId
- * PUT /api/bookings/:id
- */
+
 export const updateBooking = async (req, res) => {
   try {
     const { id } = req.params;
@@ -99,10 +96,9 @@ export const updateBooking = async (req, res) => {
   }
 };
 
-/** 
- * Soft-delete (cancel) a booking by incrementing totalCancelled and turning off activeDelivery
- * DELETE /api/bookings/:id
- */
+
+ 
+
 export const deleteBooking = async (req, res) => {
   try {
     const { id } = req.params;
