@@ -152,3 +152,59 @@ export const searchQuotationByBookingId = asyncHandler(async (req, res, next) =>
 
   res.status(200).json(new ApiResponse(200, quotation));
 });
+
+export const getActiveList = asyncHandler(async(req,res)=>{
+  const activeQuotations = await Quotation.find({ activeDelivery: true })
+    .populate("startStation", "stationName")
+    .populate("customerId", "firstName lastName");
+
+  const formatted = activeQuotations.map((q, index) => ({
+    "S.No.": index + 1,
+    "Booking ID": q.bookingId,
+    "Date": q.quotationDate.toISOString().split("T")[0],
+    "Name": q.customerId ? `${q.customerId.firstName} ${q.customerId.lastName}` : "", // fix: customerId populated
+    "Pick up": q.startStation ? q.startStation.stationName : "",
+    "": "",
+    "Name (Drop)": q.toCustomerName,
+    "Drop": q.toCity,
+    "Contact": q.mobile,
+    "Action": [
+      { name: "View", icon: "view-icon", action: `/api/quotations/${q._id}` },
+      { name: "Edit", icon: "edit-icon", action: `/api/quotations/edit/${q._id}` },
+      { name: "Delete", icon: "delete-icon", action: `/api/quotations/delete/${q._id}` },
+    ],
+  }));
+
+  res.status(200).json(new ApiResponse(200, {
+    totalActiveDeliveries: activeQuotations.length,
+    deliveries: formatted
+  }));
+});
+
+export const getCancelledList = asyncHandler(async(req,res)=>{
+  const cancelledQuotations = await Quotation.find({ totalCancelled: { $gt: 0 } })
+    .populate("startStation", "stationName")
+    .populate("customerId", "firstName lastName");
+
+  const formatted = cancelledQuotations.map((q, index) => ({
+    "S.No.": index + 1,
+    "Booking ID": q.bookingId,
+    "Date": q.quotationDate.toISOString().split("T")[0],
+    "Name": q.customerId ? `${q.customerId.firstName} ${q.customerId.lastName}` : "", // fix: customerId populated
+    "Pick up": q.startStation ? q.startStation.stationName : "",
+    "": "",
+    "Name (Drop)": q.toCustomerName,
+    "Drop": q.toCity,
+    "Contact": q.mobile,
+    "Action": [
+      { name: "View", icon: "view-icon", action: `/api/quotations/${q._id}` },
+      { name: "Edit", icon: "edit-icon", action: `/api/quotations/edit/${q._id}` },
+      { name: "Delete", icon: "delete-icon", action: `/api/quotations/delete/${q._id}` },
+    ],
+  }));
+
+  res.status(200).json(new ApiResponse(200, {
+    totalCancelledDeliveries: cancelledQuotations.length,
+    deliveries: formatted
+  }));
+});

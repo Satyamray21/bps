@@ -9,6 +9,8 @@ import {
   getTotalActiveDeliveries, 
   getTotalCancelled, 
   getTotalRevenue, 
+  getActiveList,
+  getCancelledList,
   searchQuotationByBookingId 
 } from "../controller/customerQuotation.controller.js";
 import { parseFormData } from "../middleware/multerParser.middleware.js"; 
@@ -33,8 +35,9 @@ router.get("/total-cancelled", getTotalCancelled);
 // Route to get total revenue
 router.get("/total-revenue", getTotalRevenue);
 
-// Route to search a quotation by Booking ID
+router.get("/active-list",getActiveList);
 
+router.get("/cancelled-list",getCancelledList);
 
 // Route to get a single quotation by its ID
 router.get("/:id", getQuotationById);
