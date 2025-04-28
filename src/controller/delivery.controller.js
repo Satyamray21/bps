@@ -94,7 +94,7 @@ export const assignDelivery = asyncHandler(async (req, res) => {
 export const listBookingDeliveries = asyncHandler(async (req, res) => {
   const deliveries = await Delivery.find({ deliveryType: "Booking",status: { $ne: "Final Delivery" } })
   .populate([
-    { path: "vehicleId", select: "vehicleName" },
+    { path: "vehicleId", select: "vehicleModel" },
     { path: "bookingId", populate: [
         { path: "startStation", select: "stationName" },
         { path: "endStation", select: "stationName" }
@@ -112,7 +112,7 @@ export const listBookingDeliveries = asyncHandler(async (req, res) => {
     endStation: delivery.bookingId?.endStation?.stationName || "N/A",
     status: delivery.status || "Pending",
     driverName: delivery.driverName || "N/A",
-    vehicleName: delivery.vehicleId?.vehicleName || "N/A",
+    vehicleName: delivery.vehicleId?.vehicleModel || "N/A",
   }));
 
   res.status(200).json(new ApiResponse(200, data, "Booking deliveries fetched successfully."));
@@ -132,8 +132,8 @@ export const listQuotationDeliveries = asyncHandler(async (req, res) => {
         select: "stationName"
       }
     })
-    .populate("vehicleId", "vehicleName") // Populate Vehicle Name
-    .lean(); // lean() for better performance
+    .populate("vehicleId", "vehicleModel") 
+    .lean();
 
   const data = deliveries.map((delivery, i) => ({
     SNo: i + 1,
@@ -144,7 +144,7 @@ export const listQuotationDeliveries = asyncHandler(async (req, res) => {
     endStation: delivery.quotationId?.endStation || "N/A", // Corrected here
     status: delivery.status || "Pending",
     driverName: delivery.driverName || "N/A",
-    vehicleName: delivery.vehicleId?.vehicleName || "N/A",
+    vehicleName: delivery.vehicleId?.vehicleModel || "N/A",
   }));
 
   res.status(200).json(new ApiResponse(200, data, "Quotation deliveries fetched successfully."));
