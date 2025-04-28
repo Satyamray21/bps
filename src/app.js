@@ -24,7 +24,7 @@ app.use(cookieParser());
 const authExemptRoutes = ['/api/v2/users/login', '/api/v4/users/register'];
 app.use((req, res, next) => {
     if (!authExemptRoutes.includes(req.originalUrl)) {
-      verifyJwt(req, res, next);  // Apply JWT verification to all routes except exempt ones
+      verifyJwt(req, res, next);  // Apply JWT verification to all routes 
     } else {
       next();  // Skip JWT verification for login/register routes
     }
