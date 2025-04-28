@@ -18,7 +18,7 @@ import { upload } from "../middleware/multer.middleware.js";
 import { multerErrorHandler } from "../utils/multerErrorHandler.js";
 const router = express.Router();
 
-// ➡️ Create Driver
+// 
 router.route("/create").post(upload.fields([
       {
           name:"idProofPhoto",
