@@ -1,4 +1,3 @@
-// controllers/delivery.controller.js
 
 import { asyncHandler } from "../utils/asyncHandler.js";
 import Booking from "../model/booking.model.js";

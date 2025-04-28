@@ -1,4 +1,4 @@
-// routes/tracking.route.js
+
 
 import express from "express";
 import { createTracking, getTrackingLocation,updateTrackingLocation } from "../controller/tracker.controller.js";
