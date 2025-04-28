@@ -1,4 +1,4 @@
-// models/tracking.model.js
+
 
 import mongoose from "mongoose";
 
