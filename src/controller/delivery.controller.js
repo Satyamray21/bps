@@ -101,7 +101,7 @@ export const listBookingDeliveries = asyncHandler(async (req, res) => {
       ]
     }
   ]);
-  console.log(deliveries);
+  
 
   const data = deliveries.map((delivery, i) => ({
     SNo: i + 1,
