@@ -51,7 +51,7 @@ router.route("/admin/user/:id").put(upload.fields([
     maxCount :1 
   }
 ]),multerErrorHandler,updateUser);
-router.delete("/admin/user/:id", deleteUser);
+router.delete("/admin/user/:adminId", deleteUser);
 
 // Admin user counts
 router.get("/admin/count/admins", countTotalAdmins);

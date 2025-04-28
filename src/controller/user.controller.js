@@ -188,18 +188,6 @@ export const updateUser = asyncHandler(async (req, res) => {
   }
 });
 
-// Delete user by ID
-export const deleteUser = asyncHandler(async (req, res) => {
-  try {
-    const user = await User.findByIdAndDelete(req.params.id);
-    if (!user) {
-      throw new ApiError(404, "User not found");
-    }
-    res.status(200).json(new ApiResponse(200, "User deleted successfully"));
-  } catch (error) {
-    throw new ApiError(500, error.message);
-  }
-});
 
 // Count total admins
 export const countTotalAdmins = asyncHandler(async (req, res) => {
@@ -310,3 +298,39 @@ export const getBlacklistedSupervisorsList = asyncHandler(async (req, res) => {
     throw new ApiError(500, "Error fetching blacklisted supervisors", error.message);
   }
 });
+
+// Delete user by adminId
+export const deleteUser = asyncHandler(async (req, res) => {
+  try {
+    const requestingUserId = req.user._id; // Logged-in user's Mongo _id
+    const requestingUserRole = req.user.role; // Logged-in user's role
+
+    const userToDelete = await User.findOne({ adminId: req.params.adminId });
+    if (!userToDelete) {
+      throw new ApiError(404, "User not found");
+    }
+
+    // Supervisor deletion logic
+    if (requestingUserRole === 'supervisor') {
+      if (requestingUserId.toString() !== userToDelete._id.toString()) {
+        throw new ApiError(403, "Supervisors can only delete their own account");
+      }
+    }
+
+    // Admin deletion logic
+    if (requestingUserRole === 'admin') {
+      if (userToDelete.role === 'admin') {
+        throw new ApiError(403, "Admins cannot delete other admins");
+      }
+    }
+
+    // Perform delete
+    await User.findByIdAndDelete(userToDelete._id);
+
+    res.status(200).json(new ApiResponse(200, "User deleted successfully"));
+  } catch (error) {
+    console.error("Delete user error:", error.message);
+    throw new ApiError(500, error.message);
+  }
+});
+
