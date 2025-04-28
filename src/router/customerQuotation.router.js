@@ -11,6 +11,7 @@ import {
   getTotalRevenue, 
   getActiveList,
   getCancelledList,
+  getQuotationRevenueList,
   searchQuotationByBookingId 
 } from "../controller/customerQuotation.controller.js";
 import { parseFormData } from "../middleware/multerParser.middleware.js"; 
@@ -38,6 +39,8 @@ router.get("/total-revenue", getTotalRevenue);
 router.get("/active-list",getActiveList);
 
 router.get("/cancelled-list",getCancelledList);
+
+router.get("/revenue-list",getQuotationRevenueList)
 
 // Route to get a single quotation by its ID
 router.get("/:id", getQuotationById);

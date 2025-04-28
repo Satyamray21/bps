@@ -183,3 +183,38 @@ export const getCancelledList = asyncHandler(async(req,res)=>{
     deliveries: formatted
   }));
 });
+
+
+export const getQuotationRevenueList = async (req, res) => {
+  try {
+    const quotation = await Quotation.find({ totalCancelled: 0 })
+      .select('bookingId bookingDate startStation endStation toCity grandTotal')
+      .populate('startStation endStation', 'stationName')
+      .lean();
+
+    const totalRevenue = quotation.reduce((sum, b) => sum + b.grandTotal, 0);
+
+    const data = quotation.map((b, i) => ({
+      SNo:       i + 1,
+      bookingId: b.bookingId,
+      date:      b.quotationDate,
+      pickup:    b.startStation.stationName,
+      drop:      b.toCity,
+      revenue:   b.grandTotal.toFixed(2),
+      action: {
+        view:   `/quotation/${b.bookingId}`,
+        edit:   `/quotation/edit/${b.bookingId}`,
+        delete: `/quotation/delete/${b.bookingId}`
+      }
+    }));
+
+    res.json({
+      totalRevenue: totalRevenue.toFixed(2),
+      count:        data.length,
+      data
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: err.message });
+  }
+};
