@@ -16,8 +16,6 @@ const formatCustomerList = (customers) => {
 
 // CREATE Customer
 export const createCustomer = asyncHandler(async (req, res) => {
-  console.log("Request files:", req.files);
-console.log("Request body:", req.body);
  
   const {
     firstName,

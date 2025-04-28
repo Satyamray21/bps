@@ -5,7 +5,6 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 
 
 export const createContact = asyncHandler(async (req, res) => {
-  console.log("Req",req.body);
   const { name, contactNumber, email, address } = req.body;
 
   if ([name, contactNumber, email, address].some(field => !field || field.trim() === "")) {
