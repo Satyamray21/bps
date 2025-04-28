@@ -21,7 +21,7 @@ app.use(express.urlencoded(
 ))
 app.use(express.static("public"));
 app.use(cookieParser());
-const authExemptRoutes = ['/api/v2/users/login', '/api/v4/users/register'];
+const authExemptRoutes = ['/api/v2/users/login', '/api/v2/users/register','/api/v2/state/states','/api/v2/state/cities/:state'];
 app.use((req, res, next) => {
     if (!authExemptRoutes.includes(req.originalUrl)) {
       verifyJwt(req, res, next);  // Apply JWT verification to all routes 
@@ -61,5 +61,8 @@ app.use("/api/v2/tracking",trackerRouter);
 
 import customerLedgerRouter from "./router/customerLedgerHistory.router.js"
 app.use("/api/v2/ledger",customerLedgerRouter);
+
+import statesAndCitiesRouter from "./router/stateAndCity.router.js";
+app.use("/api/v2/state",statesAndCitiesRouter);
 
 export {app}

@@ -11,7 +11,8 @@ import {
   getBlacklistedVehiclesCount,
   getBlacklistedVehicles,
   getDeactivatedVehicles,
-  getAvailableVehicles
+  getAvailableVehicles,
+  updateVehicleStatus
 } from "../controller/vehicle.controller.js";
 import { parseFormData } from "../middleware/multerParser.middleware.js";
 const router = express.Router();
@@ -23,6 +24,8 @@ router.post("/vehicle",parseFormData, createVehicle);
 router.get("/getAllvehicle", getAllVehicles);
 
 router.get("/vehicle/:vehicleId", getVehicleById);
+
+router.patch("/vehicles/:vehicleId/status", updateVehicleStatus);
 
 
 router.get("/vehicle/:id", getVehicleById);

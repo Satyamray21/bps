@@ -43,8 +43,6 @@ export const createVehicle = asyncHandler(async (req, res) => {
     renewalDate,
     renewalValidUpto,
     addcomment,
-    isBlacklisted,
-    isActive
   } = req.body;
 
   if (!vehicleModel || !ownedBy || !registrationNumber || !currentLocation) {
@@ -80,8 +78,7 @@ export const createVehicle = asyncHandler(async (req, res) => {
     renewalDate,
     renewalValidUpto,
     addcomment,
-    isBlacklisted,
-    isActive
+    
   });
 
   return res
@@ -227,3 +224,48 @@ export const getAvailableVehicles = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, "Available vehicles fetched successfully", { availableVehicles: result }));
 });
+
+
+// UPDATE Vehicle Status (available / blacklisted / deactivated)
+export const updateVehicleStatus = asyncHandler(async (req, res) => {
+  const { vehicleId } = req.params;
+  const { action } = req.body;
+
+  if (!action) {
+    throw new ApiError(400, "Action is required (available, blacklisted, deactivated).");
+  }
+
+  const allowedActions = ["available", "blacklisted", "deactivated"];
+  if (!allowedActions.includes(action)) {
+    throw new ApiError(400, `Invalid action. Allowed actions: ${allowedActions.join(", ")}`);
+  }
+
+  const vehicle = await Vehicle.findOne({ vehicleId });
+  if (!vehicle) {
+    throw new ApiError(404, "Vehicle not found with the given vehicleId.");
+  }
+
+  switch (action) {
+    case "available":
+      vehicle.isActive = true;
+      vehicle.isBlacklisted = false;
+      break;
+    case "blacklisted":
+      vehicle.isBlacklisted = true;
+      break;
+    case "deactivated":
+      vehicle.isActive = false;
+      break;
+  }
+
+  await vehicle.save();
+
+  return res.status(200).json(
+    new ApiResponse(200, `Vehicle status updated to '${action}' successfully`, {
+      vehicleId: vehicle.vehicleId,
+      isActive: vehicle.isActive,
+      isBlacklisted: vehicle.isBlacklisted,
+    })
+  );
+});
+
