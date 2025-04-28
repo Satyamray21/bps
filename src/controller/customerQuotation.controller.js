@@ -6,6 +6,25 @@ import Quotation from "../model/Customerquotation.model.js";
 import { Customer } from "../model/customer.model.js";
 import manageStation from "../model/manageStation.model.js";
 
+ const formatQuotations = (quotations) => {
+  return quotations.map((q, index) => ({
+    "S.No.": index + 1,
+    "Booking ID": q.bookingId,
+    "Date": q.quotationDate ? q.quotationDate.toISOString().split("T")[0] : "",
+    "Name": q.customerId ? `${q.customerId.firstName} ${q.customerId.lastName}` : "",
+    "Pick up": q.startStation ? q.startStation.stationName : "",
+    "": "",
+    "Name (Drop)": q.toCustomerName || "",
+    "Drop": q.toCity || "",
+    "Contact": q.mobile || "",
+    "Action": [
+      { name: "View", icon: "view-icon", action: `/api/quotations/${q._id}` },
+      { name: "Edit", icon: "edit-icon", action: `/api/quotations/edit/${q._id}` },
+      { name: "Delete", icon: "delete-icon", action: `/api/quotations/delete/${q._id}` },
+    ],
+  }));
+};
+
 // Create Quotation Controller
 export const createQuotation = asyncHandler(async (req, res, next) => {
   const { customerId, startStation, ...data } = req.body;
@@ -50,22 +69,8 @@ export const getAllQuotations = asyncHandler(async (req, res) => {
     .populate("startStation", "stationName")
     .populate("customerId", "firstName lastName");
 
-  const formatted = quotations.map((q, index) => ({
-    "S.No.": index + 1,
-    "Booking ID": q.bookingId,
-    "Date": q.quotationDate.toISOString().split("T")[0],
-    "Name": `${q.firstName} ${q.lastName}`,
-    "Pick up": q.startStation.stationName,
-    "": "",
-    "Name (Drop)": q.toCustomerName,
-    "Drop": q.toCity,
-    "Contact": q.mobile,
-    "Action": [
-      { name: "View", icon: "view-icon", action: `/api/quotations/${q._id}` },  
-      { name: "Edit", icon: "edit-icon", action: `/api/quotations/edit/${q._id}` },  
-      { name: "Delete", icon: "delete-icon", action: `/api/quotations/delete/${q._id}` },  
-    ],
-  }));
+    const formatted = formatQuotations(quotations);
+
 
   res.status(200).json(new ApiResponse(200, formatted));
 });
@@ -101,7 +106,7 @@ export const deleteQuotation = asyncHandler(async (req, res, next) => {
 
 // Get Total Booking Requests Controller
 export const getTotalBookingRequests = asyncHandler(async (req, res) => {
-  const total = await Quotation.countDocuments(); // count all quotations
+  const total = await Quotation.countDocuments(); 
   res.status(200).json(new ApiResponse(200, { totalBookingRequests: total }));
 });
 
@@ -158,22 +163,7 @@ export const getActiveList = asyncHandler(async(req,res)=>{
     .populate("startStation", "stationName")
     .populate("customerId", "firstName lastName");
 
-  const formatted = activeQuotations.map((q, index) => ({
-    "S.No.": index + 1,
-    "Booking ID": q.bookingId,
-    "Date": q.quotationDate.toISOString().split("T")[0],
-    "Name": q.customerId ? `${q.customerId.firstName} ${q.customerId.lastName}` : "", // fix: customerId populated
-    "Pick up": q.startStation ? q.startStation.stationName : "",
-    "": "",
-    "Name (Drop)": q.toCustomerName,
-    "Drop": q.toCity,
-    "Contact": q.mobile,
-    "Action": [
-      { name: "View", icon: "view-icon", action: `/api/quotations/${q._id}` },
-      { name: "Edit", icon: "edit-icon", action: `/api/quotations/edit/${q._id}` },
-      { name: "Delete", icon: "delete-icon", action: `/api/quotations/delete/${q._id}` },
-    ],
-  }));
+    const formatted = formatQuotations(activeQuotations);
 
   res.status(200).json(new ApiResponse(200, {
     totalActiveDeliveries: activeQuotations.length,
@@ -186,22 +176,7 @@ export const getCancelledList = asyncHandler(async(req,res)=>{
     .populate("startStation", "stationName")
     .populate("customerId", "firstName lastName");
 
-  const formatted = cancelledQuotations.map((q, index) => ({
-    "S.No.": index + 1,
-    "Booking ID": q.bookingId,
-    "Date": q.quotationDate.toISOString().split("T")[0],
-    "Name": q.customerId ? `${q.customerId.firstName} ${q.customerId.lastName}` : "", // fix: customerId populated
-    "Pick up": q.startStation ? q.startStation.stationName : "",
-    "": "",
-    "Name (Drop)": q.toCustomerName,
-    "Drop": q.toCity,
-    "Contact": q.mobile,
-    "Action": [
-      { name: "View", icon: "view-icon", action: `/api/quotations/${q._id}` },
-      { name: "Edit", icon: "edit-icon", action: `/api/quotations/edit/${q._id}` },
-      { name: "Delete", icon: "delete-icon", action: `/api/quotations/delete/${q._id}` },
-    ],
-  }));
+  const formatted = formatQuotations(cancelledQuotations);
 
   res.status(200).json(new ApiResponse(200, {
     totalCancelledDeliveries: cancelledQuotations.length,
