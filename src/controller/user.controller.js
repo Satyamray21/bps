@@ -300,6 +300,7 @@ export const getBlacklistedSupervisorsList = asyncHandler(async (req, res) => {
 });
 
 // Delete user by adminId
+// Delete user by adminId
 export const deleteUser = asyncHandler(async (req, res) => {
   try {
     const requestingUserId = req.user._id; // Logged-in user's Mongo _id
@@ -319,7 +320,8 @@ export const deleteUser = asyncHandler(async (req, res) => {
 
     // Admin deletion logic
     if (requestingUserRole === 'admin') {
-      if (userToDelete.role === 'admin') {
+      if (userToDelete.role === 'admin' && requestingUserId.toString() !== userToDelete._id.toString()) {
+        // If trying to delete other admins (not yourself)
         throw new ApiError(403, "Admins cannot delete other admins");
       }
     }
@@ -333,4 +335,5 @@ export const deleteUser = asyncHandler(async (req, res) => {
     throw new ApiError(500, error.message);
   }
 });
+
 
