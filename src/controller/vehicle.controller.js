@@ -229,7 +229,7 @@ export const getAvailableVehicles = asyncHandler(async (req, res) => {
 // UPDATE Vehicle Status (available / blacklisted / deactivated)
 export const updateVehicleStatus = asyncHandler(async (req, res) => {
   const { vehicleId } = req.params;
-  const { action } = req.body;
+  const { action } = req.query;
 
   if (!action) {
     throw new ApiError(400, "Action is required (available, blacklisted, deactivated).");
