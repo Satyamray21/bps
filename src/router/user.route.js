@@ -14,6 +14,7 @@ import {
   loginUser,
   getDeactivatedSupervisorsList,
   getBlacklistedSupervisorsList,
+  updateSupervisorStatus,
   logoutUser
 } from "../controller/user.controller.js";
 
@@ -64,5 +65,9 @@ router.get("/admin/supervisors", getSupervisorsList);
 router.get("/admin/admins", getAdminsList);
 router.get("/admin/supervisors/deactivated", getDeactivatedSupervisorsList);
 router.get("/admin/supervisors/blacklisted", getBlacklistedSupervisorsList);
+
+// routes/supervisor.route.js (or similar)
+router.patch("/update-status/:adminId/:action", updateSupervisorStatus);
+
 
 export default router;

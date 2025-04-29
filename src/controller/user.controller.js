@@ -33,18 +33,6 @@ export const registerUser = asyncHandler(async (req, res) => {
 
     const user = new User(userData);
     await user.save();
-    try {
-              if (userData.idProofPhoto) {
-                await fs.unlink(userData.idProofPhoto);
-              }
-              if(userData.adminProfilePhoto)
-              {
-                await fs.unlink(userData.adminProfilePhoto);
-              }
-              
-            } catch (error) {
-              console.error("Error deleting temp files:", error);
-            }
     res.status(201).json(new ApiResponse(201, "User registered successfully", user));
   } catch (error) {
     console.log("error message",error.message);
@@ -283,14 +271,14 @@ export const getDeactivatedSupervisorsList = asyncHandler(async (req, res) => {
 export const getBlacklistedSupervisorsList = asyncHandler(async (req, res) => {
   try {
     const blacklistedSupervisors = await User.find({ role: 'supervisor', isBlacklisted: true })
-      .select("userId firstName lastName contactNumber");
+      .select("adminId firstName lastName contactNumber");
 
     const formattedBlacklistedSupervisors = blacklistedSupervisors.map((supervisor, index) => ({
       sNo: index + 1,
-      supervisorId: supervisor.userId,
+      supervisorId: supervisor.adminId,
       name: `${supervisor.firstName} ${supervisor.lastName}`,
       contact: supervisor.contactNumber,
-      userId: supervisor._id,
+      
     }));
 
     res.status(200).json(new ApiResponse(200, "Blacklisted supervisors fetched successfully", formattedBlacklistedSupervisors));
@@ -335,5 +323,44 @@ export const deleteUser = asyncHandler(async (req, res) => {
     throw new ApiError(500, error.message);
   }
 });
+
+export const updateSupervisorStatus = asyncHandler(async (req, res) => {
+  const { adminId, action } = req.params;
+
+  const allowedActions = ["available", "blacklisted", "deactivated"];
+  if (!allowedActions.includes(action)) {
+    throw new ApiError(400, `Invalid action. Allowed actions: ${allowedActions.join(", ")}`);
+  }
+
+  const supervisor = await User.findOne({ adminId, role: "supervisor" });
+  if (!supervisor) {
+    throw new ApiError(404, "Supervisor not found with the given adminId.");
+  }
+
+  switch (action) {
+    case "available":
+      supervisor.isActive = true;
+      supervisor.isBlacklisted = false;
+      break;
+    case "blacklisted":
+      supervisor.isBlacklisted = true;
+      break;
+    case "deactivated":
+      supervisor.isActive = false;
+      break;
+  }
+
+  
+  await supervisor.save({ validateModifiedOnly: true });
+
+  return res.status(200).json(
+    new ApiResponse(200, `Supervisor status updated to '${action}' successfully`, {
+      adminId: supervisor.adminId,
+      isActive: supervisor.isActive,
+      isBlacklisted: supervisor.isBlacklisted,
+    })
+  );
+});
+
 
 
