@@ -209,7 +209,7 @@ export const countDeactivatedSupervisors = asyncHandler(async (req, res) => {
 // Get list of all supervisors
 export const getSupervisorsList = asyncHandler(async (req, res) => {
   try {
-    const supervisors = await User.find({ role: 'supervisor' }).select("adminId firstName lastName contactNumber");
+    const supervisors = await User.find({ role: 'supervisor',isActive:true,isBlacklisted:false }).select("adminId firstName lastName contactNumber");
 
     const formattedSupervisors = supervisors.map((supervisor, index) => ({
       sNo: index + 1,
