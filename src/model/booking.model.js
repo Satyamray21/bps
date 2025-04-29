@@ -145,8 +145,9 @@ const BookingSchema = new mongoose.Schema(
       required: true 
     },
     toPay: { 
-      type: Number, 
-      required: true 
+      type: String, 
+      required: true ,
+      enum:["pay","paid"]
     },
     weight: { 
       type: Number, 
@@ -188,7 +189,6 @@ const BookingSchema = new mongoose.Schema(
     },
     grandTotal: { 
       type: Number, 
-      required: true 
     },
     computedTotalRevenue: {
       type: Number,
@@ -218,6 +218,27 @@ BookingSchema.pre('validate', function (next) {
   }
   next();
 });
+
+BookingSchema.pre('save', function (next) {
+  // Basic charge (you can replace this with custom logic)
+  const weightRate = 50; // example: ₹50 per kg
+  this.amount = (this.weight || 0) * weightRate;
+
+  // Calculate grandTotal
+  this.grandTotal = 
+    (this.freight || 0) +
+    (this.ins_vpp || 0) +
+    (this.cgst || 0) +
+    (this.sgst || 0) +
+    (this.igst || 0) +
+    this.amount;
+
+  // Set computedTotalRevenue (optional)
+  this.computedTotalRevenue = this.grandTotal;
+
+  next();
+});
+
 
 const Booking = mongoose.model('Booking', BookingSchema);
 export default Booking;
