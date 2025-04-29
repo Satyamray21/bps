@@ -42,7 +42,7 @@ router.route("/register").post(upload.fields([
 // Admin user CRUD
 router.get("/admin/users", getAllUsersForAdmin);
 router.get("/admin/user/:id", getUserById);
-router.route("/admin/user/:id").put(upload.fields([
+router.route("/admin/user/:adminId").put(upload.fields([
   {
       name:"idProofPhoto",
       maxCount :1

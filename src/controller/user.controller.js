@@ -9,8 +9,6 @@ import bcrypt from "bcrypt"
 // Register a new user
 export const registerUser = asyncHandler(async (req, res) => {
   try {
-    console.log("Req body",req.body);
-    console.log("Req file",req.files);
     if (req.body.role === 'admin' && req.body.isBlacklisted === true) {
       throw new ApiError(400, "Admin users cannot be blacklisted");
     }
@@ -95,14 +93,13 @@ export const logoutUser = asyncHandler(async (req, res) => {
 // Get all users for admin 
 export const getAllUsersForAdmin = asyncHandler(async (req, res) => {
   try {
-    const users = await User.find().select("userId firstName lastName contactNumber");
+    const users = await User.find().select("adminId firstName lastName contactNumber");
 
     const formattedUsers = users.map((user, index) => ({
       sNo: index + 1,
-      adminId: user.userId,
+      adminId: user.adminId,
       name: `${user.firstName} ${user.lastName}`,
       contact: user.contactNumber,
-      userId: user._id,
     }));
 
     res.status(200).json(new ApiResponse(200, "Users fetched successfully", formattedUsers));
@@ -127,18 +124,24 @@ export const getUserById = asyncHandler(async (req, res) => {
 // Update user by ID
 export const updateUser = asyncHandler(async (req, res) => {
   try {
+    const adminId = req.params.adminId;
+    if (!adminId) {
+      throw new ApiError(400, "adminId is required to update user");
+    }
+
+    // Clone body data
     let updatedData = { ...req.body };
 
-    // Fetch current user data (to delete old photos if needed)
-    const existingUser = await User.findById(req.params.id);
+    // Find user by adminId
+    const existingUser = await User.findOne({ adminId });
     if (!existingUser) {
       throw new ApiError(404, "User not found");
     }
 
-    // If new files are uploaded
+    // Handle uploaded files
     if (req.files) {
-      if (req.files['idProofPhoto']) {
-        // Delete old idProofPhoto if exists
+      // ID Proof Photo
+      if (req.files["idProofPhoto"]) {
         if (existingUser.idProofPhoto) {
           try {
             await fs.unlink(existingUser.idProofPhoto);
@@ -146,12 +149,11 @@ export const updateUser = asyncHandler(async (req, res) => {
             console.error("Error deleting old idProofPhoto:", unlinkError);
           }
         }
-        // Save new file path
-        updatedData.idProofPhoto = req.files['idProofPhoto'][0].path;
+        updatedData.idProofPhoto = req.files["idProofPhoto"][0].path;
       }
 
-      if (req.files['adminProfilePhoto']) {
-        // Delete old adminProfilePhoto if exists
+      // Admin Profile Photo
+      if (req.files["adminProfilePhoto"]) {
         if (existingUser.adminProfilePhoto) {
           try {
             await fs.unlink(existingUser.adminProfilePhoto);
@@ -159,22 +161,25 @@ export const updateUser = asyncHandler(async (req, res) => {
             console.error("Error deleting old adminProfilePhoto:", unlinkError);
           }
         }
-        // Save new file path
-        updatedData.adminProfilePhoto = req.files['adminProfilePhoto'][0].path;
+        updatedData.adminProfilePhoto = req.files["adminProfilePhoto"][0].path;
       }
     }
 
-    const updatedUser = await User.findByIdAndUpdate(req.params.id, updatedData, {
+    // Update user
+    const updatedUser = await User.findOneAndUpdate({ adminId }, updatedData, {
       new: true,
       runValidators: true,
     });
 
-    res.status(200).json(new ApiResponse(200, "User updated successfully", updatedUser));
+    res
+      .status(200)
+      .json(new ApiResponse(200, "User updated successfully", updatedUser));
   } catch (error) {
     console.error("Update user error:", error.message);
     throw new ApiError(400, error.message);
   }
 });
+
 
 
 // Count total admins
@@ -287,8 +292,7 @@ export const getBlacklistedSupervisorsList = asyncHandler(async (req, res) => {
   }
 });
 
-// Delete user by adminId
-// Delete user by adminId
+
 export const deleteUser = asyncHandler(async (req, res) => {
   try {
     const requestingUserId = req.user._id; // Logged-in user's Mongo _id
@@ -342,15 +346,18 @@ export const updateSupervisorStatus = asyncHandler(async (req, res) => {
       supervisor.isActive = true;
       supervisor.isBlacklisted = false;
       break;
+
     case "blacklisted":
+      supervisor.isActive = false; // IMPORTANT: blacklist means deactivate from active
       supervisor.isBlacklisted = true;
       break;
+
     case "deactivated":
       supervisor.isActive = false;
+      supervisor.isBlacklisted = false; // Remove from blacklist when deactivating
       break;
   }
 
-  
   await supervisor.save({ validateModifiedOnly: true });
 
   return res.status(200).json(
@@ -361,6 +368,8 @@ export const updateSupervisorStatus = asyncHandler(async (req, res) => {
     })
   );
 });
+
+
 
 
 
