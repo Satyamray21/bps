@@ -16,7 +16,7 @@ export const viewBooking = async (req, res) => {
   try {
     const { id } = req.params;
     const booking = await Booking.findOne({
-      $or: [{ bookingId: id }, { _id: id }]
+      $or: [{ bookingId: id }]
     })
     .populate('startStation endStation', 'stationName')
     .lean();
@@ -102,18 +102,23 @@ export const updateBooking = async (req, res) => {
 export const deleteBooking = async (req, res) => {
   try {
     const { id } = req.params;
-    const booking = await Booking.findOneAndUpdate(
-      { bookingId: id },
-      { $inc: { totalCancelled: 1 }, activeDelivery: false },
-      { new: true }
-    );
-    if (!booking) return res.status(404).json({ message: 'Booking not found' });
-    res.json({ message: 'Booking cancelled successfully', booking });
+
+    const deletedBooking = await Booking.findOneAndDelete({ bookingId: id });
+
+    if (!deletedBooking) {
+      return res.status(404).json({ message: "Booking not found" });
+    }
+
+    res.status(200).json({
+      message: "Booking permanently deleted",
+      deletedBooking,
+    });
   } catch (err) {
-    console.error(err);
+    console.error("Error deleting booking:", err);
     res.status(500).json({ message: err.message });
   }
 };
+
 
 /** 
  * List bookings by “status”
