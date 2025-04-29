@@ -9,7 +9,10 @@ import {
   getActiveCustomerCount,
   getBlacklistedCustomerCount,
   getBlockedCustomers,
-  getActiveCustomers
+  getActiveCustomers,
+  updateCustomerStatusToBlacklisted,
+  updateCustomerStatusToActive,
+
 } from '../controller/customer.controller.js';
 import { parseFormData } from "../middleware/multerParser.middleware.js";
 import {upload} from "../middleware/multer.middleware.js";
@@ -55,5 +58,9 @@ router.put('/update/:id', upload.fields([{ name: 'idProofPhoto', maxCount: 1 }, 
 
 // Delete customer
 router.delete('/delete/:id', deleteCustomer);
+
+router.patch("/status/activate/:customerId", updateCustomerStatusToActive);
+router.patch("/status/blacklist/:customerId", updateCustomerStatusToBlacklisted);
+
 
 export default router;

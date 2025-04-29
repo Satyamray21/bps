@@ -158,3 +158,48 @@ export const getBlockedCustomers = asyncHandler(async (req, res) => {
 
   return res.status(200).json(new ApiResponse(200, "Blocked customers fetched successfully", customerList));
 });
+// UPDATE customer status to ACTIVE using customerId
+export const updateCustomerStatusToActive = asyncHandler(async (req, res) => {
+  const { customerId } = req.params;
+
+  const customer = await Customer.findOne({ customerId });
+  if (!customer) {
+    throw new ApiError(404, "Customer not found with the given customerId.");
+  }
+
+  customer.status = "active";
+  customer.isBlacklisted = false;
+
+  await customer.save({ validateModifiedOnly: true });
+
+  return res.status(200).json(
+    new ApiResponse(200, "Customer status updated to 'active' successfully", {
+      customerId: customer.customerId,
+      status: customer.status,
+      isBlacklisted: customer.isBlacklisted,
+    })
+  );
+});
+
+// UPDATE customer status to BLACKLISTED using customerId
+export const updateCustomerStatusToBlacklisted = asyncHandler(async (req, res) => {
+  const { customerId } = req.params;
+
+  const customer = await Customer.findOne({ customerId });
+  if (!customer) {
+    throw new ApiError(404, "Customer not found with the given customerId.");
+  }
+
+  customer.isBlacklisted = true;
+
+  await customer.save({ validateModifiedOnly: true });
+
+  return res.status(200).json(
+    new ApiResponse(200, "Customer status updated to 'blacklisted' successfully", {
+      customerId: customer.customerId,
+      status: customer.status,
+      isBlacklisted: customer.isBlacklisted,
+    })
+  );
+});
+
