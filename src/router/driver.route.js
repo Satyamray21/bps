@@ -11,7 +11,9 @@ import {
     getBlacklistedDrivers,
     getAvailableDriversCount,
     getBlacklistedDriversCount,
-    updateDriverStatus
+    updateDriverStatus,
+    getDeactivedDriversCount,
+    getDeactivedDrivers
 } from "../controller/driver.controller.js";
 
 import { upload } from "../middleware/multer.middleware.js";
@@ -47,6 +49,12 @@ router.get("/available-count", getAvailableDriversCount);
 //  Get Blacklisted Drivers Count
 router.get("/blacklisted-count", getBlacklistedDriversCount);
 
+// Get Deactived List
+router.get("/deactive-list",getDeactivedDrivers);
+
+//Get Deactive Count
+
+router.get("/deactive-count",getDeactivedDriversCount)
 //  Get Driver by Mongo _id
 router.get("/:id", getDriverById);
 
@@ -56,8 +64,9 @@ router.get("/driver-id/:driverId", getDriverByDriverId);
 //  Update Driver details
 router.put("/update/:id",updateDriver);
 
-//  Update only Driver Status (isAvailable, isBlacklisted)
-router.patch("/update-status/:id", updateDriverStatus);
+//  Update only Driver Status (isAvailable, isBlacklisted,isDeactived)
+
+router.patch("/driver/status/:driverId/:status", updateDriverStatus);
 
 //  Delete Driver
 router.delete("/delete/:id", deleteDriver);

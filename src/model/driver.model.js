@@ -14,7 +14,8 @@ const driverSchema = new mongoose.Schema({
         required:true
     },
     contactNumber:{
-        type:Number
+        type:Number,
+        required:true
     },
     emailId:{
         type:String,
@@ -70,7 +71,12 @@ const driverSchema = new mongoose.Schema({
     isAvailable: {
         type: Boolean,
         default: true
+    },
+    isDeactived: {
+        type: Boolean,
+        default: false
     }
+    
 }, { timestamps: true });
 
 driverSchema.pre("save", async function (next) {

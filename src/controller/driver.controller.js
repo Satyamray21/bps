@@ -6,13 +6,12 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 
 // Helper function to format driver list
 const formatDriverList = (drivers) => {
+    console.log(drivers);
     return drivers.map((driver, index) => ({
         sNo: index + 1,
         driverId: driver.driverId,
         name: `${driver.firstName} ${driver.middleName ? driver.middleName + ' ' : ''}${driver.lastName}`,
         contactNumber: driver.contactNumber,
-        isAvailable: driver.isAvailable,
-        isBlacklisted: driver.isBlacklisted,
         actions: [
             { name: "View", icon: "view-icon", action: `/api/drivers/${driver.driverId}` },
             { name: "Edit", icon: "edit-icon", action: `/api/drivers/edit/${driver.driverId}` },
@@ -112,6 +111,7 @@ export const getTotalDriversCount = asyncHandler(async (req, res) => {
     return res.status(200).json(new ApiResponse(200, "Total drivers count fetched", totalDrivers));
 });
 
+
 // Get Available Drivers Count
 export const getAvailableDriversCount = asyncHandler(async (req, res) => {
     const count = await Driver.countDocuments({ isAvailable: true, isBlacklisted: false });
@@ -154,18 +154,50 @@ export const updateDriver = asyncHandler(async (req, res) => {
     return res.status(200).json(new ApiResponse(200, "Driver updated successfully", updatedDriver));
 });
 
-// Update Driver status (isAvailable / isBlacklisted)
+
 export const updateDriverStatus = asyncHandler(async (req, res) => {
-    const { isAvailable, isBlacklisted } = req.body;
-    const driver = await Driver.findByIdAndUpdate(
-        req.params.id,
-        { isAvailable, isBlacklisted },
+    const { driverId, status } = req.params;
+
+    let updateFields = {};
+
+    switch (status.toLowerCase()) {
+        case "available":
+            updateFields = { isAvailable: true, isBlacklisted: false ,isDeactived:false};
+            break;
+        case "blacklist":
+            updateFields = { isAvailable: false, isBlacklisted: true,isDeactived:false };
+            break;
+        case "deactive":
+                updateFields = { isAvailable: false, isBlacklisted: false, isDeactived: true };
+                break;
+            
+        default:
+            throw new ApiError(400, "Invalid status. Use 'available', 'blacklist', or 'deactive'");
+    }
+
+    const driver = await Driver.findOneAndUpdate(
+        { driverId },
+        updateFields,
         { new: true, runValidators: true }
     );
+
     if (!driver) {
         throw new ApiError(404, "Driver not found");
     }
-    return res.status(200).json(new ApiResponse(200, "Driver status updated", driver));
+
+    return res.status(200).json(
+        new ApiResponse(200, "Driver status updated successfully", driver)
+    );
+});
+
+export const getDeactivedDrivers = asyncHandler(async (req, res) => {
+    const drivers = await Driver.find({ isDeactived:true });
+    const driverList = formatDriverList(drivers);
+    return res.status(200).json(new ApiResponse(200, "Deactived drivers fetched successfully", driverList));
+});
+export const getDeactivedDriversCount = asyncHandler(async (req, res) => {
+    const count = await Driver.countDocuments({ isDeactived: true });
+    return res.status(200).json(new ApiResponse(200, "Deactived drivers count fetched", count));
 });
 
 // delete krne k liye
