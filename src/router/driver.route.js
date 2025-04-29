@@ -62,7 +62,15 @@ router.get("/:id", getDriverById);
 router.get("/driver-id/:driverId", getDriverByDriverId);
 
 //  Update Driver details
-router.put("/update/:id",updateDriver);
+router.route("/update/:id").put(upload.fields([
+    {
+        name:"idProofPhoto",
+        maxCount :1
+    },{
+        name:"driverProfilePhoto",
+        maxCount:1
+    }
+]),multerErrorHandler ,updateDriver);
 
 //  Update only Driver Status (isAvailable, isBlacklisted,isDeactived)
 

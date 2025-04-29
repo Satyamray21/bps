@@ -3,7 +3,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
  import fs from "fs/promises";
-
+import {upload} from "../middleware/multer.middleware.js"
 // Helper function to format driver list
 const formatDriverList = (drivers) => {
     console.log(drivers);
@@ -69,17 +69,7 @@ export const createDriver = asyncHandler(async (req, res) => {
         isBlacklisted: isBlacklisted === "true" || isBlacklisted === true,
         isAvailable: isAvailable === "true" || isAvailable === true,
     });
-    try {
-        if (idProofPhoto) {
-          await fs.unlink(idProofPhoto);
-        }
-        if (driverProfilePhoto) {
-          await fs.unlink(driverProfilePhoto);
-        }
-      } catch (error) {
-        console.error("Error deleting temp files:", error);
-      }
-    
+
    
     return res.status(201).json(new ApiResponse(201, "Driver created successfully", driver));
 });
@@ -144,16 +134,28 @@ export const getDriverById = asyncHandler(async (req, res) => {
 
 //  Update Driver by _id
 export const updateDriver = asyncHandler(async (req, res) => {
-    const updatedDriver = await Driver.findByIdAndUpdate(req.params.id, req.body, {
-        new: true,
-        runValidators: true,
-    });
+    const { idProofPhoto, driverProfilePhoto } = req.files;
+  
+    const idProofPhotoPath = idProofPhoto ? idProofPhoto[0].path : undefined;
+    const driverProfilePhotoPath = driverProfilePhoto ? driverProfilePhoto[0].path : undefined;
+  
+    const updatedDriver = await Driver.findByIdAndUpdate(
+      req.params.id,
+      {
+        ...req.body,
+        idProofPhoto: idProofPhotoPath,
+        driverProfilePhoto: driverProfilePhotoPath,
+      },
+      { new: true, runValidators: true }
+    );
+  
     if (!updatedDriver) {
-        throw new ApiError(404, "Driver not found");
+      throw new ApiError(404, 'Driver not found');
     }
-    return res.status(200).json(new ApiResponse(200, "Driver updated successfully", updatedDriver));
-});
-
+  
+    return res.status(200).json(new ApiResponse(200, 'Driver updated successfully', updatedDriver));
+  });
+  
 
 export const updateDriverStatus = asyncHandler(async (req, res) => {
     const { driverId, status } = req.params;
