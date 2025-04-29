@@ -27,25 +27,30 @@ import manageStation from "../model/manageStation.model.js";
 
 // Create Quotation Controller
 export const createQuotation = asyncHandler(async (req, res, next) => {
-  const { customerId, startStation, ...data } = req.body;
+  const {
+    firstName,
+    lastName,
+    startStationName,
+    ...data
+  } = req.body;
 
-  // Validate customerId
-  if (!customerId) {
-    return next(new ApiError(400, "Customer ID is required"));
+  // Validate required names
+  if (!firstName || !lastName) {
+    return next(new ApiError(400, "Customer first and last name are required"));
   }
 
-  const customer = await Customer.findOne({ customerId: customerId });
+  if (!startStationName) {
+    return next(new ApiError(400, "Start station name is required"));
+  }
+
+  // Find customer by name
+  const customer = await Customer.findOne({ firstName, lastName });
   if (!customer) return next(new ApiError(404, "Customer not found"));
 
-  // Validate startStation
-  if (!startStation) {
-    return next(new ApiError(400, "Start Station ID is required"));
-  }
-
-  const station = await manageStation.findOne({ stationId: startStation });
+  // Find station by name
+  const station = await manageStation.findOne({ stationName: startStationName });
   if (!station) return next(new ApiError(404, "Start station not found"));
 
-  // Create a new quotation document
   const quotation = new Quotation({
     ...data,
     customerId: customer._id,
@@ -62,6 +67,9 @@ export const createQuotation = asyncHandler(async (req, res, next) => {
 
   res.status(201).json(new ApiResponse(201, quotation, "Quotation created successfully"));
 });
+
+
+
 
 // Get All Quotations Controller
 export const getAllQuotations = asyncHandler(async (req, res) => {
@@ -88,7 +96,8 @@ export const getQuotationById = asyncHandler(async (req, res, next) => {
 
 // Update Quotation Controller
 export const updateQuotation = asyncHandler(async (req, res, next) => {
-  const updatedQuotation = await Quotation.findByIdAndUpdate(req.params.id, req.body, { new: true });
+  const { bookingId } = req.params;
+  const updatedQuotation = await Quotation.findOneAndUpdate({bookingId},{new:true});
   
   if (!updatedQuotation) return next(new ApiError(404, "Quotation not found"));
 
@@ -97,16 +106,24 @@ export const updateQuotation = asyncHandler(async (req, res, next) => {
 
 // Delete Quotation Controller
 export const deleteQuotation = asyncHandler(async (req, res, next) => {
-  const deletedQuotation = await Quotation.findByIdAndDelete(req.params.id);
-  
-  if (!deletedQuotation) return next(new ApiError(404, "Quotation not found"));
+  const { bookingId } = req.params;
 
-  res.status(200).json(new ApiResponse(200, null, "Quotation deleted successfully"));
+  const deletedQuotation = await Quotation.findOneAndDelete({ bookingId });
+
+  if (!deletedQuotation) {
+    return next(new ApiError(404, "Quotation not found"));
+  }
+
+  res
+    .status(200)
+    .json(new ApiResponse(200, null, "Quotation deleted successfully"));
 });
+
 
 // Get Total Booking Requests Controller
 export const getTotalBookingRequests = asyncHandler(async (req, res) => {
-  const total = await Quotation.countDocuments(); 
+  const total = await Quotation.countDocuments({activeDelivery: false, 
+    totalCancelled: 0 }); 
   res.status(200).json(new ApiResponse(200, { totalBookingRequests: total }));
 });
 
@@ -218,3 +235,55 @@ export const getQuotationRevenueList = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
+// Update Quotation Status Controller (query only, no cancel reason)
+export const updateQuotationStatus = asyncHandler(async (req, res, next) => {
+  const { bookingId } = req.params;
+  const { activeDelivery } = req.query;
+
+  if (activeDelivery !== 'true' && activeDelivery !== 'false') {
+    return next(new ApiError(400, "activeDelivery must be 'true' or 'false' as a query param"));
+  }
+
+  const isActive = activeDelivery === 'true';
+
+  const updateFields = {
+    activeDelivery: isActive,
+    totalCancelled: isActive ? 0 : 1,
+    cancelReason: isActive ? undefined : "", // Optional: reset or blank reason
+  };
+
+  const updatedQuotation = await Quotation.findOneAndUpdate(
+    { bookingId },
+    { $set: updateFields },
+    { new: true }
+  );
+
+  if (!updatedQuotation) {
+    return next(new ApiError(404, "Quotation not found"));
+  }
+
+  const statusMsg = isActive ? "Quotation marked as active" : "Quotation cancelled";
+  res.status(200).json(new ApiResponse(200, updatedQuotation, statusMsg));
+});
+
+// Get List of Booking Requests (Not active, not cancelled)
+export const RequestBookingList = asyncHandler(async (req, res) => {
+  // Fetch quotations that are not active and not cancelled
+  const quotations = await Quotation.find({ 
+    activeDelivery: false, 
+    totalCancelled: 0 
+  })
+    .populate("startStation", "stationName")
+    .populate("customerId", "firstName lastName");
+
+ 
+  const formatted = formatQuotations(quotations);  
+
+  // Return the formatted list
+  res.status(200).json(new ApiResponse(200, { 
+    totalNonActiveNonCancelled: quotations.length,
+    deliveries: formatted 
+  }));
+});
+

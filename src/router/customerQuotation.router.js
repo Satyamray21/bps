@@ -12,7 +12,9 @@ import {
   getActiveList,
   getCancelledList,
   getQuotationRevenueList,
-  searchQuotationByBookingId 
+  searchQuotationByBookingId ,
+  RequestBookingList,
+  updateQuotationStatus
 } from "../controller/customerQuotation.controller.js";
 import { parseFormData } from "../middleware/multerParser.middleware.js"; 
 
@@ -42,14 +44,17 @@ router.get("/cancelled-list",getCancelledList);
 
 router.get("/revenue-list",getQuotationRevenueList)
 
+router.get("/booking-request-list",RequestBookingList)
+
+router.patch("/status/:bookingId", updateQuotationStatus);
 // Route to get a single quotation by its ID
 router.get("/:id", getQuotationById);
 
 // Route to update a quotation
-router.put("/:id", updateQuotation);
+router.put("/:bookingId", updateQuotation);
 
 // Route to delete a quotation
-router.delete("/:id", deleteQuotation);
+router.delete("/:bookingId", deleteQuotation);
 
 router.get("/search/:bookingId", searchQuotationByBookingId);
 
