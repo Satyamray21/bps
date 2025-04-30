@@ -1,7 +1,7 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
-
+import nodemailer from 'nodemailer';
 import Quotation from "../model/Customerquotation.model.js";
 import { Customer } from "../model/customer.model.js";
 import manageStation from "../model/manageStation.model.js";
@@ -289,3 +289,65 @@ export const RequestBookingList = asyncHandler(async (req, res) => {
   }));
 });
 
+const transporter = nodemailer.createTransport({
+  service: 'gmail',  
+  auth: {
+    user: process.env.gmail, 
+    pass: process.env.app_pass   
+  }
+});
+
+export const sendBookingEmail = async (req, res) => {
+  try {
+    const { bookingId } = req.body;
+
+   
+    const quotation = await Quotation.findOne({ bookingId });
+
+    if (!quotation) {
+      return res.status(404).json({ message: 'quotation not found' });
+    }
+
+    const { firstName, lastName, email, fromAddress, fromCity, fromState, fromPincode ,toAddress, toState, toCity, toPincode,name,weight,grandTotal} = booking;
+
+    const mailOptions = {
+      from: process.env.gmail,  
+      to: email,                    
+      subject: `Quotation Details - ${quotation.bookingId}`,
+      text: `
+       Quotation Details
+
+        Dear ${firstName} ${lastName},
+
+        Your quotation with Quotation ID: ${quotation.bookingId} has been successfully created.
+
+        From Address: ${fromAddress}, ${fromCity}, ${fromState}, ${fromPincode}
+       
+
+        To Address:${toAddress}, ${toCity} ,${toState}, ${toPincode}
+        
+
+        Product Details :-Name:${name} Weight:${weight}   amount:${grandTotal} 
+      
+
+        Thank you for choosing our service.
+
+        Best regards,
+        BharatParcel Team
+      `
+    };
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.error('Error sending email:', error);
+        return res.status(500).json({ message: 'Failed to send email' });
+      } else {
+        console.log('Email sent: ' + info.response);
+        return res.status(200).json({ message: 'Email sent successfully' });
+      }
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: err.message });
+  }
+};
