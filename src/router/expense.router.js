@@ -19,7 +19,11 @@ router.get("/getExpenses", getAllExpenses);
 router.get("/expense/:invoiceNo", getExpenseByNo);
 
 
-router.put("/expense/:invoiceNo", updateExpenseByNo);
+router.route("/expense/:invoiceNo").put(upload.fields([
+    {
+        name:"document",
+        maxCount :1
+    }]),multerErrorHandler,updateExpenseByNo);
 
 
 router.delete("/expense/:invoiceNo", deleteExpenseByNo);

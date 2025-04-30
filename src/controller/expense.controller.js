@@ -25,14 +25,6 @@ export const createExpense = asyncHandler(async (req, res) => {
 
   
   const expense = await Expense.create({ title, date, invoiceNo, details, amount, taxAmount, totalAmount ,document});
-  try {
-          if (document) {
-            await fs.unlink(document);
-          }
-          
-        } catch (error) {
-          console.error("Error deleting temp files:", error);
-        }
 
   return res.status(201).json(new ApiResponse(201, "Expense created successfully", expense));
 });
@@ -71,6 +63,14 @@ export const getExpenseByNo = asyncHandler(async (req, res) => {
 
 
 export const updateExpenseByNo = asyncHandler(async (req, res) => {
+  console.log("Req files",req.files);
+  const document = req.files?.document?.[0]?.path || null;
+
+  
+  if (document) {
+    req.body.document = document;
+  }
+
   const updated = await Expense.findOneAndUpdate(
     { invoiceNo: req.params.invoiceNo },
     req.body,
@@ -83,6 +83,7 @@ export const updateExpenseByNo = asyncHandler(async (req, res) => {
 
   return res.status(200).json(new ApiResponse(200, "Expense updated successfully", updated));
 });
+
 
 
 export const deleteExpenseByNo = asyncHandler(async (req, res) => {
