@@ -93,9 +93,15 @@ const quotationSchema = new mongoose.Schema({
   },
   grandTotal: { 
     type: Number, 
-    required: true 
   },
-
+  amount:{
+    type:Number,
+    required:true,
+  },
+  freight:{
+    type:Number,
+    required:true
+  },
   productDetails: [
     {
       name: { 
@@ -129,13 +135,11 @@ const quotationSchema = new mongoose.Schema({
 
 
 quotationSchema.pre("save", async function (next) {
+  // Only generate if not already set
   if (!this.bookingId) {
-    const count = await mongoose.model("Quotation").countDocuments();
-    const padded = (count + 1).toString().padStart(4, "0");
-    this.bookingId = `BHPAR${padded}QUOK`;
+    const randomNumber = Math.floor(1000 + Math.random() * 9000); // 4-digit random
+    this.bookingId = `BHPAR${randomNumber}QUOK`;
   }
-  next();
-});
 
 
 quotationSchema.virtual("bookingRequestTotal").get(function () {
@@ -143,7 +147,7 @@ quotationSchema.virtual("bookingRequestTotal").get(function () {
 });
 
 quotationSchema.virtual("totalTax").get(function () {
-  return this.sTax + this.sgst;
+  return this.sTax + this.sgst +this.freight;
 });
 
 quotationSchema.virtual("computedTotalRevenue").get(function () {
@@ -153,11 +157,17 @@ quotationSchema.virtual("computedTotalRevenue").get(function () {
   }, 0);
   
 
-  const totalRevenue = productTotal - (this.sTax + this.sgst);
+  const totalRevenue = productTotal - (this.sTax + this.sgst)+this.amount;
 
   return totalRevenue;
 });
+const productTotal = this.productDetails.reduce((acc, item) => {
+  return acc + item.price * item.quantity;
+}, 0);
+this.grandTotal = productTotal + this.sTax + this.sgst +this.amount;
 
+next();
+});
 
 quotationSchema.set("toJSON", { virtuals: true });
 quotationSchema.set("toObject", { virtuals: true });
