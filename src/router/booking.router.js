@@ -11,7 +11,8 @@ import {
   getBookingRequestsCount,
   getActiveDeliveriesCount,
   getCancelledBookingsCount,
-  getTotalRevenue
+  getTotalRevenue,
+  sendBookingEmail
 } from '../controller/booking.controller.js';
 
 import {parseFormData} from "../middleware/multerParser.middleware.js";
@@ -23,6 +24,7 @@ router.get('/bookings/count/requests', getBookingRequestsCount);
 router.get('/bookings/count/active', getActiveDeliveriesCount);
 router.get('/bookings/count/cancelled', getCancelledBookingsCount);
 router.get('/bookings/revenue/total', getTotalRevenue);
+router.post('/send-booking-email', sendBookingEmail);
 
 
 //  CRUD routes AFTER static routes

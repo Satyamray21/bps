@@ -1,6 +1,6 @@
 import Booking from '../model/booking.model.js';
 import Station from '../model/manageStation.model.js';  
-
+import nodemailer from 'nodemailer';
 
 async function resolveStation(name) {
   const station = await Station.findOne({ stationName: new RegExp(`^${name}$`, 'i') });
@@ -8,6 +8,13 @@ async function resolveStation(name) {
   return station._id;
 }
 
+const transporter = nodemailer.createTransport({
+  service: 'gmail',  
+  auth: {
+    user: process.env.gmail, 
+    pass: process.env.app_pass   
+  }
+});
 /** 
  * View a single booking by its bookingId or _id
  * GET /api/bookings/:id
@@ -299,3 +306,57 @@ export const activateBooking = async (req, res) => {
   }
 };
 
+export const sendBookingEmail = async (req, res) => {
+  try {
+    const { bookingId } = req.body;
+
+    // Find the booking using bookingId
+    const booking = await Booking.findOne({ bookingId });
+
+    if (!booking) {
+      return res.status(404).json({ message: 'Booking not found' });
+    }
+
+    const { firstName, lastName, email, senderLocality, fromCity, fromState, senderPincode ,receiverLocality, toState, toCity, toPincode,weight,grandTotal} = booking;
+
+    const mailOptions = {
+      from: process.env.gmail,  
+      to: email,                    
+      subject: `Booking Confirmation - ${booking.bookingId}`,
+      text: `
+        Booking Confirmation
+
+        Dear ${firstName} ${lastName},
+
+        Your booking with Booking ID: ${booking.bookingId} has been successfully created.
+
+        From Address:
+        ${senderLocality}, ${fromCity}, ${fromState}, ${senderPincode}
+
+        To Address:
+        ${receiverLocality}, ${toCity} ,${toState}, ${toPincode}
+
+        Product Details :-
+        Weight:${weight}   amount:${grandTotal}
+
+        Thank you for choosing our service.
+
+        Best regards,
+        BharatParcel Team
+      `
+    };
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.error('Error sending email:', error);
+        return res.status(500).json({ message: 'Failed to send email' });
+      } else {
+        console.log('Email sent: ' + info.response);
+        return res.status(200).json({ message: 'Email sent successfully' });
+      }
+    });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: err.message });
+  }
+};
