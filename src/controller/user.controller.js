@@ -41,12 +41,11 @@ export const loginUser = asyncHandler(async (req, res) => {
   try {
     const { emailId, password } = req.body;
 
-    // Check if email is provided
+    
     if (!emailId || !password) {
       throw new ApiError(400, "Email and password are required");
     }
 
-    // Find the user by email
     const user = await User.findOne({ emailId }).select("+password");
     if (!user) {
       throw new ApiError(401, "Invalid email or password");
@@ -65,7 +64,6 @@ export const loginUser = asyncHandler(async (req, res) => {
       { expiresIn: "1h" } // token expiration
     );
 
-    // Set the token in the cookies (optional, if you want to use cookies for storing the token)
     res.cookie("accessToken", token, { httpOnly: true, secure: process.env.NODE_ENV === "production", maxAge: 3600000 }); // 1 hour
 
     // Respond with success and token
@@ -77,17 +75,38 @@ export const loginUser = asyncHandler(async (req, res) => {
   }
 });
 // Logout User
+const tokenBlacklist = new Set();
+
 export const logoutUser = asyncHandler(async (req, res) => {
   try {
-    // Clear the access token from cookies
-    res.clearCookie("accessToken", { httpOnly: true, secure: process.env.NODE_ENV === "production" });
+    // Get token from cookie or Authorization header
+    const token =
+      req.cookies?.accessToken ||
+      req.header("Authorization")?.replace("Bearer ", "").trim();
 
-    // Send response
+    // Blacklist the token if available
+    if (token) {
+      tokenBlacklist.add(token);
+    }
+
+    // Clear the access token cookie
+    res.clearCookie("accessToken", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      path: "/"
+    });
+
     res.status(200).json(new ApiResponse(200, "User logged out successfully"));
   } catch (error) {
     console.error("Logout error:", error.message);
     throw new ApiError(500, "Logout failed", error.message);
   }
+});
+
+//User profile
+export const getUserProfile = asyncHandler(async (req, res) => {
+  res.status(200).json(new ApiResponse(200, "User fetched successfully", req.user));
 });
 
 // Get all users for admin 
@@ -369,7 +388,7 @@ export const updateSupervisorStatus = asyncHandler(async (req, res) => {
   );
 });
 
-
+export {tokenBlacklist};
 
 
 
