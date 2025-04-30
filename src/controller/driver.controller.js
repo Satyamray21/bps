@@ -139,22 +139,26 @@ export const updateDriver = asyncHandler(async (req, res) => {
     const idProofPhotoPath = idProofPhoto ? idProofPhoto[0].path : undefined;
     const driverProfilePhotoPath = driverProfilePhoto ? driverProfilePhoto[0].path : undefined;
   
-    const updatedDriver = await Driver.findByIdAndUpdate(
-      req.params.id,
-      {
-        ...req.body,
-        idProofPhoto: idProofPhotoPath,
-        driverProfilePhoto: driverProfilePhotoPath,
-      },
+    const updatedData = {
+      ...req.body,
+    };
+  
+    if (idProofPhotoPath) updatedData.idProofPhoto = idProofPhotoPath;
+    if (driverProfilePhotoPath) updatedData.driverProfilePhoto = driverProfilePhotoPath;
+  
+    const updatedDriver = await Driver.findOneAndUpdate(
+      { driverId: req.params.id },
+      updatedData,
       { new: true, runValidators: true }
     );
   
     if (!updatedDriver) {
-      throw new ApiError(404, 'Driver not found');
+      throw new ApiError(404, 'Driver not found with the given driverId');
     }
   
     return res.status(200).json(new ApiResponse(200, 'Driver updated successfully', updatedDriver));
   });
+  
   
 
 export const updateDriverStatus = asyncHandler(async (req, res) => {
@@ -204,9 +208,14 @@ export const getDeactivedDriversCount = asyncHandler(async (req, res) => {
 
 // delete krne k liye
 export const deleteDriver = asyncHandler(async (req, res) => {
-    const deletedDriver = await Driver.findByIdAndDelete(req.params.id);
+    const deletedDriver = await Driver.findOneAndDelete({ driverId: req.params.id });
+  
     if (!deletedDriver) {
-        throw new ApiError(404, "Driver not found");
+      throw new ApiError(404, "Driver not found with the given driverId");
     }
-    return res.status(200).json(new ApiResponse(200, "Driver deleted successfully"));
-});
+  
+    return res.status(200).json(
+      new ApiResponse(200, "Driver deleted successfully", deletedDriver)
+    );
+  });
+  
