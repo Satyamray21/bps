@@ -11,8 +11,10 @@ import manageStation from "../model/manageStation.model.js";
     "S.No.": index + 1,
     "Booking ID": q.bookingId,
     "Date": q.quotationDate ? q.quotationDate.toISOString().split("T")[0] : "",
-    "Name": q.customerId ? `${q.customerId.firstName} ${q.customerId.lastName}` : "",
-    "Pick up": q.startStation ? q.startStation.stationName : "",
+    "Name": q.customerId
+    ? `${q.customerId.firstName} ${q.customerId.lastName}`
+    : `${q.firstName || ""} ${q.lastName || ""}`.trim(),
+    "Pick up": q.startStation?.stationName || q.startStationName || 'N/A',
     "": "",
     "Name (Drop)": q.toCustomerName || "",
     "Drop": q.toCity || "",
@@ -76,7 +78,7 @@ export const getAllQuotations = asyncHandler(async (req, res) => {
   const quotations = await Quotation.find()
     .populate("startStation", "stationName")
     .populate("customerId", "firstName lastName");
-
+   console.log(quotations)
     const formatted = formatQuotations(quotations);
 
 
