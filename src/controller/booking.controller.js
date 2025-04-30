@@ -14,6 +14,7 @@ async function resolveStation(name) {
  */
 export const viewBooking = async (req, res) => {
   try {
+    console.log("station name",req.startStation);
     const { id } = req.params;
     const booking = await Booking.findOne({
       $or: [{ bookingId: id }]
@@ -124,6 +125,10 @@ export const deleteBooking = async (req, res) => {
  * List bookings by “status”
  * GET /api/bookings/booking-list?type=request|active|cancelled
  */
+/** 
+ * List bookings by “status”
+ * GET /api/bookings/booking-list?type=request|active|cancelled
+ */
 export const getBookingStatusList = async (req, res) => {
   try {
     const { type } = req.query;
@@ -137,22 +142,24 @@ export const getBookingStatusList = async (req, res) => {
       // request = neither active nor cancelled
       filter = { activeDelivery: false, totalCancelled: 0 };
     }
-    
 
     const bookings = await Booking.find(filter)
       .select('bookingId firstName lastName senderName receiverName bookingDate mobile startStation endStation')
       .populate('startStation endStation', 'stationName')
       .lean();
 
-    const data = bookings.map((b, i) => ({
+    // Filter out bookings with missing station references
+    const validBookings = bookings.filter(b => b.startStation && b.endStation);
+
+    const data = validBookings.map((b, i) => ({
       SNo:      i + 1,
       orderBy:  `${b.firstName} ${b.lastName}`,
-      date:     b.bookingDate.toISOString().slice(0,10),
-      fromName: b.senderName,
-      pickup:   b.startStation.stationName,
-      toName:   b.receiverName,
-      drop:     b.endStation.stationName,
-      contact:  b.mobile,
+      date:     b.bookingDate?.toISOString().slice(0, 10) || 'N/A',
+      fromName: b.senderName || 'N/A',
+      pickup:   b.startStation?.stationName || 'N/A',
+      toName:   b.receiverName || 'N/A',
+      drop:     b.endStation?.stationName || 'N/A',
+      contact:  b.mobile || 'N/A',
       action: {
         view:   `/bookings/${b.bookingId}`,
         edit:   `/bookings/edit/${b.bookingId}`,
@@ -166,6 +173,7 @@ export const getBookingStatusList = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
 
 
 // PATCH /api/v2/bookings/:bookingId/cancel

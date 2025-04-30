@@ -15,6 +15,7 @@ const BookingSchema = new mongoose.Schema(
       ref: 'manageStation', 
       required: true 
     },
+
     endStation: { 
       type: mongoose.Schema.Types.ObjectId, 
       ref: 'manageStation', 
