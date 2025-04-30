@@ -80,8 +80,8 @@ const searchStationById = asyncHandler(async (req, res, next) => {
 const updateStation = asyncHandler(async (req, res) => {
   const stationId = req.params.id;
 
-  const updatedStation = await manageStation.findByIdAndUpdate(
-    stationId,
+  const updatedStation = await manageStation.findOneAndUpdate(
+    {stationId: stationId},
     req.body,
     { new: true, runValidators: true }
   );
@@ -97,7 +97,7 @@ const updateStation = asyncHandler(async (req, res) => {
 const deleteStation = asyncHandler(async (req, res) => {
   const stationId = req.params.id;
 
-  const deletedStation = await manageStation.findByIdAndDelete(stationId);
+  const deletedStation = await manageStation.findOneAndDelete({stationId});
 
   if (!deletedStation) {
     throw new ApiError(404, "Station not found");
