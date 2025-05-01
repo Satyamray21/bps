@@ -16,12 +16,15 @@ import {
   getBlacklistedSupervisorsList,
   updateSupervisorStatus,
   logoutUser,
-  getUserProfile
+  getUserProfile,
+  sentResetCode,
+  changePassword
 } from "../controller/user.controller.js";
 
 import { verifyJwt } from "../middleware/auth.middleware.js";
 import {upload} from "../middleware/multer.middleware.js"
 import { multerErrorHandler } from "../utils/multerErrorHandler.js";
+import verifyCode from "../middleware/verifyEmail.middleware.js";
 const router = express.Router();
 
 // Register user
@@ -55,6 +58,9 @@ router.route("/admin/user/:adminId").put(upload.fields([
     maxCount :1 
   }
 ]),multerErrorHandler,updateUser);
+
+router.route("/changePassword").post(changePassword);
+router.route("/send-reset-code").post(sentResetCode);
 router.delete("/admin/user/:adminId", deleteUser);
 
 // Admin user counts

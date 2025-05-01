@@ -4,7 +4,7 @@ import { ApiError } from "../utils/ApiError.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import fs from "fs/promises";
 import jwt from "jsonwebtoken";  
-
+import  nodemailer from "nodemailer";
 import bcrypt from "bcrypt"
 // Register a new user
 export const registerUser = asyncHandler(async (req, res) => {
@@ -387,6 +387,107 @@ export const updateSupervisorStatus = asyncHandler(async (req, res) => {
     })
   );
 });
+
+export const changePassword = asyncHandler(async (req, res) => {
+  const { oldpassword, newPassword, emailId, code } = req.body;
+  let user;
+
+
+  // Case 1: Authenticated user using old password
+  if (oldpassword) {
+    user = await User.findById(req.user?._id);
+    console.log("Found user by auth:", user?.emailId);
+
+    if (!user) {
+      throw new ApiError(404, "User not found");
+    }
+
+    const isValidPassword = await user.isPasswordCorrect(oldpassword);
+    if (!isValidPassword) {
+      throw new ApiError(401, "Invalid old password");
+    }
+  }
+
+  // Case 2: Reset password via email + code (unauthenticated)
+  else if (emailId && code) {
+    user = await User.findOne({ emailId });
+    console.log("Found user by emailId:", user?.emailId);
+
+    if (!user) {
+      throw new ApiError(404, "User not found");
+    }
+
+
+    if (
+      !user.verificationCode ||
+      !user.verificationCodeExpires ||
+      String(user.verificationCode) !== String(code) ||
+      user.verificationCodeExpires < Date.now()
+    ) {
+      throw new ApiError(400, "Invalid or expired verification code");
+    }
+
+    // Clear the code after successful verification
+    user.verificationCode = undefined;
+    user.verificationCodeExpires = undefined;
+    await user.save({ validateBeforeSave: false });
+  }
+
+  // Case 3: Neither method provided
+  else {
+    throw new ApiError(400, "Provide either old password or reset code");
+  }
+
+  // Set new password
+  user.password = newPassword;
+  await user.save({ validateBeforeSave: false });
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, {}, "User password successfully changed"));
+});
+
+export const sentResetCode = asyncHandler(async (req, res) => {
+  try {
+    const { emailId } = req.body;
+    const user = await User.findOne({ emailId });
+
+    if (!user) {
+      throw new ApiError(404, "User not found");
+    }
+
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    user.verificationCode = code;
+    user.verificationCodeExpires = Date.now() + 10 * 60 * 1000;
+    
+
+    // Save without validation (to only update the code fields)
+    await user.save({ validateBeforeSave: false });
+
+    // Send the email
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.gmail,
+        pass: process.env.app_pass,
+      },
+    });
+
+    await transporter.sendMail({
+      from: process.env.gmail,
+      to: user.emailId,
+      subject: "Reset Your Password",
+      text: `Your password reset code is: ${code}`,
+    });
+
+    res.status(200).json(new ApiResponse(200, {}, "Verification Code successfully sent"));
+  } catch (error) {
+    console.error("Error in sendResetCode:", error.message, error.stack);
+    res.status(500).json({ message: "Something went wrong", error: error.message });
+  }
+});
+
+
 
 export {tokenBlacklist};
 

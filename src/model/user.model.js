@@ -72,15 +72,21 @@ const UserSchema = new mongoose.Schema(
     isActive: {
       type: Boolean,
       default: true
-    }
+    },
+    verificationCode: {
+      type: String,
+    },
+    verificationCodeExpires: {
+      type: Date,
+    },
   },
   { timestamps: true }
 );
 
-// Pre-save hook for password hashing and adminId generation
+
 UserSchema.pre("save", async function (next) {
   if (this.isModified("password")) {
-    this.password = await bcrypt.hash(this.password, 10); // Hash password before saving
+    this.password = await bcrypt.hash(this.password, 10); 
   }
 
   if (!this.adminId) {
@@ -90,5 +96,8 @@ UserSchema.pre("save", async function (next) {
 
   next();
 });
+UserSchema.methods.isPasswordCorrect = async function (password) {
+  return bcrypt.compare(password, this.password); // Compare the hashed password with the stored password
+};
 
 export const User = mongoose.model("User", UserSchema);
