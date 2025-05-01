@@ -8,7 +8,11 @@ const BookingSchema = new mongoose.Schema(
       required: true, 
       unique: true 
     },
-
+    customerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Customer', 
+      required: true
+    },
     // Stations
     startStation: { 
       type: mongoose.Schema.Types.ObjectId, 
@@ -207,6 +211,11 @@ const BookingSchema = new mongoose.Schema(
       type: Number, 
       default: 0 
     },
+    invoiceGenerated: {
+      type: Boolean,
+      default: false,
+    },
+    
   },
   { timestamps: true }
 );
