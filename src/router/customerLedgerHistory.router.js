@@ -1,17 +1,12 @@
 import express from "express";
-import {
-  getAllLedgerHistory,
-  getLedgerEntries,
-  createLedgerEntry,
-  updateLedgerEntry
-} from "../controller/customerLedgerHistory.controller.js";
+import { getInvoices,  getAllInvoices } from "../controller/customerLedgerHistory.controller.js"
 
-import {parseFormData} from "../middleware/multerParser.middleware.js"
 const router = express.Router();
 
-router.get("/", getAllLedgerHistory);
-router.get("/search", getLedgerEntries);
-router.post("/",parseFormData, createLedgerEntry);
-router.put("/:id", updateLedgerEntry);
+// Route to get invoice preview
+router.post('/invoices', getInvoices);
+
+// Route to submit an invoice and generate ledger history
+router.get('/',  getAllInvoices);
 
 export default router;
