@@ -57,7 +57,7 @@ const BookingSchema = new mongoose.Schema(
     },
     locality: { 
       type: String, 
-      required: true 
+      required:true
     },
 
     // Dates

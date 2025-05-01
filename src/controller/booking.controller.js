@@ -1,5 +1,6 @@
 import Booking from '../model/booking.model.js';
 import Station from '../model/manageStation.model.js';  
+import {Customer} from '../model/customer.model.js';
 import nodemailer from 'nodemailer';
 
 async function resolveStation(name) {
@@ -43,39 +44,119 @@ export const viewBooking = async (req, res) => {
  */
 export const createBooking = async (req, res) => {
   try {
+    console.log("Reg", req.body);
+
+    // Destructure the incoming request body
     const {
+      email,
       startStation: startName,
       endStation: endName,
-      firstName, lastName, mobile, email, locality,
-      bookingDate, deliveryDate,
-      senderName, senderGgt, senderLocality, fromState, fromCity, senderPincode,
-      receiverName, receiverGgt, receiverLocality, toState, toCity, toPincode,
-      receiptNo, refNo,
-      insurance, vppAmount, toPay, weight, amount, addComment,
-      freight, ins_vpp, cgst, sgst, igst, billTotal, grandTotal
+      bookingDate,
+      deliveryDate,
+     locality,
+      senderName,
+      senderGgt,
+      senderLocality,
+      fromState,
+      fromCity,
+      senderPincode,
+      receiverName,
+      receiverGgt,
+      receiverLocality,
+      toState,
+      toCity,
+      toPincode,
+      receiptNo,
+      refNo,
+      insurance,
+      vppAmount,
+      toPay,
+      weight,
+      amount,
+      addComment,
+      freight,
+      ins_vpp,
+      cgst,
+      sgst,
+      igst,
+      billTotal,
+      grandTotal,
     } = req.body;
 
-    const startStation = await resolveStation(startName);
-    const endStation   = await resolveStation(endName);
+    // Ensure required fields are present
+    if (!email || !startName || !endName || !bookingDate || !deliveryDate) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
 
+    // Find customer by email
+    const customer = await Customer.findOne({ emailId: email });
+    if (!customer) {
+      return res.status(404).json({ message: "Customer not found with provided email" });
+    }
+
+    // Resolve stations
+    const startStation = await resolveStation(startName);
+    const endStation = await resolveStation(endName);
+
+    // Ensure resolved stations exist
+    if (!startStation || !endStation) {
+      return res.status(400).json({ message: "Invalid station names provided" });
+    }
+
+    // Create booking object
     const booking = new Booking({
-      startStation, endStation,
-      firstName, lastName, mobile, email, locality,
-      bookingDate, deliveryDate,
-      senderName, senderGgt, senderLocality, fromState, fromCity, senderPincode,
-      receiverName, receiverGgt, receiverLocality, toState, toCity, toPincode,
-      receiptNo, refNo,
-      insurance, vppAmount, toPay, weight, amount, addComment,
-      freight, ins_vpp, cgst, sgst, igst, billTotal, grandTotal
+      customerId: customer._id,
+      startStation,
+      endStation,
+      firstName: customer.firstName,
+      middleName: customer.middleName || '',
+      lastName: customer.lastName,
+      mobile: customer.contactNumber, // Ensure to use the correct customer mobile number
+      email: customer.emailId,
+      bookingDate,
+      deliveryDate,
+      senderName,
+      senderGgt,
+      senderLocality,
+      fromState,
+      fromCity,
+      senderPincode,
+      receiverName,
+      receiverGgt,
+      receiverLocality,
+      toState,
+      toCity,
+      toPincode,
+      receiptNo,
+      refNo,
+      insurance,
+      vppAmount,
+      toPay,
+      weight,
+      amount,
+      addComment,
+      freight,
+      ins_vpp,
+      cgst,
+      sgst,
+      igst,
+      billTotal,
+      grandTotal,
     });
 
+    // Save the booking
     await booking.save();
-    res.status(201).json(booking);
+
+    // Send success response
+    res.status(201).json({ message: "Booking created successfully", booking });
   } catch (err) {
     console.error(err);
-    res.status(400).json({ message: err.message });
+    // Send error response with detailed message
+    res.status(500).json({ message: err.message || "Server Error" });
   }
 };
+
+
 
 
 export const updateBooking = async (req, res) => {
