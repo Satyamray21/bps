@@ -32,11 +32,30 @@ export const createQuotation = asyncHandler(async (req, res, next) => {
   const {
     firstName,
     lastName,
+    middleName, // in case user sends it
     startStationName,
-    ...data
+    endStation,
+    quotationDate,
+    proposedDeliveryDate,
+    fromCustomerName,
+    fromAddress,
+    fromCity,
+    fromState,
+    fromPincode,
+    toCustomerName,
+    toAddress,
+    toCity,
+    toState,
+    toPincode,
+    additionalCmt,
+    sTax,
+    sgst,
+    amount,
+    freight,
+    productDetails, // Expecting an array of products
+    locality,
   } = req.body;
 
-  // Validate required names
   if (!firstName || !lastName) {
     return next(new ApiError(400, "Customer first and last name are required"));
   }
@@ -45,30 +64,73 @@ export const createQuotation = asyncHandler(async (req, res, next) => {
     return next(new ApiError(400, "Start station name is required"));
   }
 
-  // Find customer by name
+  if (!endStation) {
+    return next(new ApiError(400, "End station is required"));
+  }
+
+  // 1. Find Customer
   const customer = await Customer.findOne({ firstName, lastName });
   if (!customer) return next(new ApiError(404, "Customer not found"));
 
-  // Find station by name
+  // 2. Find Start Station
   const station = await manageStation.findOne({ stationName: startStationName });
   if (!station) return next(new ApiError(404, "Start station not found"));
 
+  // 3. Validate product details
+  if (!Array.isArray(productDetails) || productDetails.length === 0) {
+    return next(new ApiError(400, "At least one product must be provided"));
+  }
+
+  for (const product of productDetails) {
+    if (
+      !product.name ||
+      typeof product.quantity !== "number" ||
+      typeof product.price !== "number" ||
+      typeof product.weight !== "number"
+    ) {
+      return next(new ApiError(400, "Invalid product details"));
+    }
+  }
+
+  // 4. Create and Save Quotation
   const quotation = new Quotation({
-    ...data,
     customerId: customer._id,
     startStation: station._id,
     startStationName: station.stationName,
+    endStation,
     firstName: customer.firstName,
-    middleName: customer.middleName,
+    middleName: customer.middleName || middleName || "",
     lastName: customer.lastName,
     mobile: customer.contactNumber,
     email: customer.emailId,
+    locality: locality || customer.locality || "",
+    quotationDate,
+    proposedDeliveryDate,
+    fromCustomerName,
+    fromAddress,
+    fromCity,
+    fromState,
+    fromPincode,
+    toCustomerName,
+    toAddress,
+    toCity,
+    toState,
+    toPincode,
+    additionalCmt,
+    sTax: Number(sTax),
+    sgst: Number(sgst),
+    amount: Number(amount),
+    freight: Number(freight),
+    productDetails,
   });
 
   await quotation.save();
 
-  res.status(201).json(new ApiResponse(201, quotation, "Quotation created successfully"));
+  res
+    .status(201)
+    .json(new ApiResponse(201, quotation, "Quotation created successfully"));
 });
+
 
 
 
@@ -301,41 +363,55 @@ export const sendBookingEmail = async (req, res) => {
   try {
     const { bookingId } = req.body;
 
-   
-    const quotation = await Quotation.findOne({ bookingId });
+    // Find the booking using bookingId
+    const booking = await Quotation.findOne({ bookingId });
 
-    if (!quotation) {
-      return res.status(404).json({ message: 'quotation not found' });
+    if (!booking) {
+      return res.status(404).json({ message: 'Quotation not found' });
     }
 
-    const { firstName, lastName, email, fromAddress, fromCity, fromState, fromPincode ,toAddress, toState, toCity, toPincode,name,weight,grandTotal} = booking;
-
+    const { 
+      firstName, 
+      lastName, 
+      email, 
+      fromAddress, 
+      fromCity, 
+      fromState, 
+      fromPincode,
+      toAddress, 
+      toState, 
+      toCity, 
+      toPincode, 
+      productDetails, 
+      grandTotal 
+    } = booking;
+    
+    let productDetailsText = '';
+    productDetails.forEach(product => {
+      productDetailsText += `\nName: ${product.name}, Weight: ${product.weight}, Quantity: ${product.quantity}, Price: ${product.price}`;
+    });
     const mailOptions = {
-      from: process.env.gmail,  
-      to: email,                    
-      subject: `Quotation Details - ${quotation.bookingId}`,
-      text: `
-       Quotation Details
-
-        Dear ${firstName} ${lastName},
-
-        Your quotation with Quotation ID: ${quotation.bookingId} has been successfully created.
-
-        From Address: ${fromAddress}, ${fromCity}, ${fromState}, ${fromPincode}
-       
-
-        To Address:${toAddress}, ${toCity} ,${toState}, ${toPincode}
-        
-
-        Product Details :-Name:${name} Weight:${weight}   amount:${grandTotal} 
-      
-
-        Thank you for choosing our service.
-
-        Best regards,
-        BharatParcel Team
+      from: process.env.gmail,
+      to: email,
+      subject: `Quotation Details - ${booking.bookingId}`,
+      html: `
+        <h2><b>Quotation Details</b></h2>
+        <p>Dear ${firstName} ${lastName},</p>
+        <p>Your booking with Booking ID: <strong>${booking.bookingId}</strong> has been successfully created.</p>
+        <p><strong>From Address:</strong> ${fromAddress}, ${fromCity}, ${fromState}, ${fromPincode}</p>
+        <p><strong>To Address:</strong> ${toAddress}, ${toCity}, ${toState}, ${toPincode}</p>
+        <h3>Product Details:</h3>
+        <ul>
+          ${productDetails.map(product => `
+            <li><strong>Name:</strong> ${product.name}, <strong>Weight:</strong> ${product.weight}, <strong>Quantity:</strong> ${product.quantity}, <strong>Price:</strong> ${product.price}</li>
+          `).join('')}
+        </ul>
+        <p><strong>Grand Total:</strong> ${grandTotal}</p>
+        <p>Thank you for choosing our service.</p>
+        <p>Best regards,<br>BharatParcel Team</p>
       `
     };
+    
     transporter.sendMail(mailOptions, (error, info) => {
       if (error) {
         console.error('Error sending email:', error);

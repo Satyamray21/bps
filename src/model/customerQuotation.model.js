@@ -27,8 +27,8 @@ const quotationSchema = new mongoose.Schema({
   firstName: String,
   middleName: String,
   lastName: String,
-  mobile: String,
-  email: String,
+  mobile:String,
+  email:String,
   locality: String,
 
   quotationDate: { 
