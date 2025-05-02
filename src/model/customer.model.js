@@ -26,7 +26,7 @@ const customerSchema = new mongoose.Schema({
         type:String,
         required:true
     },
-    distinct:{
+    district:{
         type:String
     },
     state:{
