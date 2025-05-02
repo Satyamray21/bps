@@ -28,7 +28,7 @@ router.post('/send-booking-email', sendBookingEmail);
 
 
 //  CRUD routes AFTER static routes
-router.post('/',parseFormData, createBooking);           // Create a new booking
+router.post('/', createBooking);           // Create a new booking
 router.patch('/:id/activate', activateBooking);
 router.patch('/:bookingId/cancel',cancelBooking);
 router.get('/:id', viewBooking);           // View by bookingId (not _id!)

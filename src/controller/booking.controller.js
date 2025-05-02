@@ -43,17 +43,14 @@ export const viewBooking = async (req, res) => {
  * POST /api/bookings
  */
 export const createBooking = async (req, res) => {
+  console.log("req",req.email);
   try {
-    console.log("Reg", req.body);
-
-    // Destructure the incoming request body
     const {
-      email,
       startStation: startName,
       endStation: endName,
+      email,
       bookingDate,
       deliveryDate,
-     locality,
       senderName,
       senderGgt,
       senderLocality,
@@ -66,13 +63,7 @@ export const createBooking = async (req, res) => {
       toState,
       toCity,
       toPincode,
-      receiptNo,
-      refNo,
-      insurance,
-      vppAmount,
-      toPay,
-      weight,
-      amount,
+      items,  
       addComment,
       freight,
       ins_vpp,
@@ -83,8 +74,7 @@ export const createBooking = async (req, res) => {
       grandTotal,
     } = req.body;
 
-    // Ensure required fields are present
-    if (!email || !startName || !endName || !bookingDate || !deliveryDate) {
+    if (!email || !startName || !endName || !bookingDate || !deliveryDate || !items) {
       return res.status(400).json({ message: "Missing required fields" });
     }
 
@@ -103,7 +93,7 @@ export const createBooking = async (req, res) => {
       return res.status(400).json({ message: "Invalid station names provided" });
     }
 
-    // Create booking object
+    // Create the booking object
     const booking = new Booking({
       customerId: customer._id,
       startStation,
@@ -111,7 +101,7 @@ export const createBooking = async (req, res) => {
       firstName: customer.firstName,
       middleName: customer.middleName || '',
       lastName: customer.lastName,
-      mobile: customer.contactNumber, // Ensure to use the correct customer mobile number
+      mobile: customer.contactNumber,
       email: customer.emailId,
       bookingDate,
       deliveryDate,
@@ -127,13 +117,7 @@ export const createBooking = async (req, res) => {
       toState,
       toCity,
       toPincode,
-      receiptNo,
-      refNo,
-      insurance,
-      vppAmount,
-      toPay,
-      weight,
-      amount,
+      items,  // Array of items passed in request body
       addComment,
       freight,
       ins_vpp,
@@ -147,14 +131,70 @@ export const createBooking = async (req, res) => {
     // Save the booking
     await booking.save();
 
+    // Send booking confirmation email to customer
+    await sendBookingEmail(customer.emailId, booking);
+
     // Send success response
     res.status(201).json({ message: "Booking created successfully", booking });
   } catch (err) {
     console.error(err);
-    // Send error response with detailed message
     res.status(500).json({ message: err.message || "Server Error" });
   }
 };
+
+export const sendBookingEmail = async (email, booking) => {
+  const {
+    firstName,
+    lastName,
+    senderLocality,
+    fromCity,
+    fromState,
+    senderPincode,
+    receiverLocality,
+    toState,
+    toCity,
+    toPincode,
+    grandTotal,
+    items = []
+  } = booking;
+
+  const totalWeight = items.reduce((sum, item) => sum + (item.weight || 0), 0);
+
+  const mailOptions = {
+    from: process.env.GMAIL_USER,
+    to: email,
+    subject: `Booking Confirmation - ${booking.bookingId}`,
+    html: `
+      <h2>Booking Confirmation</h2>
+
+      <p>Dear <strong>${firstName} ${lastName}</strong>,</p>
+
+      <p>Your booking with <strong>Booking ID: ${booking.bookingId}</strong> has been successfully created.</p>
+
+      <h3>From Address:</h3>
+      <p>${senderLocality}, ${fromCity}, ${fromState}, ${senderPincode}</p>
+
+      <h3>To Address:</h3>
+      <p>${receiverLocality}, ${toCity}, ${toState}, ${toPincode}</p>
+
+      <h3>Product Details:</h3>
+      <p>Weight: ${totalWeight} kg</p>
+      <p>Amount: ₹${grandTotal}</p>
+
+      <p>Thank you for choosing our service.</p>
+
+      <p>Best regards, <br /> BharatParcel Team</p>
+    `
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log(`Booking confirmation email sent to ${email}`);
+  } catch (error) {
+    console.error('Error sending booking confirmation email:', error);
+  }
+};
+
 
 
 
@@ -387,57 +427,4 @@ export const activateBooking = async (req, res) => {
   }
 };
 
-export const sendBookingEmail = async (req, res) => {
-  try {
-    const { bookingId } = req.body;
 
-    // Find the booking using bookingId
-    const booking = await Booking.findOne({ bookingId });
-
-    if (!booking) {
-      return res.status(404).json({ message: 'Booking not found' });
-    }
-
-    const { firstName, lastName, email, senderLocality, fromCity, fromState, senderPincode ,receiverLocality, toState, toCity, toPincode,weight,grandTotal} = booking;
-
-    const mailOptions = {
-      from: process.env.gmail,  
-      to: email,                    
-      subject: `Booking Confirmation - ${booking.bookingId}`,
-      text: `
-        Booking Confirmation
-
-        Dear ${firstName} ${lastName},
-
-        Your booking with Booking ID: ${booking.bookingId} has been successfully created.
-
-        From Address:
-        ${senderLocality}, ${fromCity}, ${fromState}, ${senderPincode}
-
-        To Address:
-        ${receiverLocality}, ${toCity} ,${toState}, ${toPincode}
-
-        Product Details :-
-        Weight:${weight}   amount:${grandTotal}
-
-        Thank you for choosing our service.
-
-        Best regards,
-        BharatParcel Team
-      `
-    };
-    transporter.sendMail(mailOptions, (error, info) => {
-      if (error) {
-        console.error('Error sending email:', error);
-        return res.status(500).json({ message: 'Failed to send email' });
-      } else {
-        console.log('Email sent: ' + info.response);
-        return res.status(200).json({ message: 'Email sent successfully' });
-      }
-    });
-
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: err.message });
-  }
-};

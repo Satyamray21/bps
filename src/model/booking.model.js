@@ -1,254 +1,262 @@
 import mongoose from 'mongoose';
 
+// Single shipment item schema
+const ItemSchema = new mongoose.Schema({
+  receiptNo: {
+    type: String,
+    required: true
+  },
+  refNo: {
+    type: String,
+    required: true
+  },
+  insurance: {
+    type: Number,
+    required: true
+  },
+  vppAmount: {
+    type: Number,
+    required: true
+  },
+  toPay: {
+    type: String,
+    required: true,
+    enum: ['pay', 'paid','none']
+  },
+  weight: {
+    type: Number,
+    required: true
+  },
+  amount: {
+    type: Number,
+    required: true
+  }
+});
+
 const BookingSchema = new mongoose.Schema(
   {
     // Auto-generated booking ID
-    bookingId: { 
-      type: String, 
-      required: true, 
-      unique: true 
+    bookingId: {
+      type: String,
+      unique: true
     },
-    customerId: {
+
+    // Linked customer
+   
+
+    // Start & end stations
+    startStation: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Customer', 
+      ref: 'manageStation',
       required: true
     },
-    // Stations
-    startStation: { 
-      type: mongoose.Schema.Types.ObjectId, 
-      ref: 'manageStation', 
-      required: true 
+    endStation: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'manageStation',
+      required: true
     },
 
-    endStation: { 
-      type: mongoose.Schema.Types.ObjectId, 
-      ref: 'manageStation', 
-      required: true 
+    // Customer info
+    firstName: {
+      type: String,
+     
     },
-
-    // Customer Info
-    firstName: { 
-      type: String, 
-      required: true 
+    middleName: {
+      type: String,
+      default: ''
     },
-    middleName: { 
-      type: String, 
-      default: '' 
+    lastName: {
+      type: String,
+     
     },
-    lastName: { 
-      type: String, 
-      required: true 
+    mobile: {
+      type: String,
+     
     },
-    mobile: { 
-      type: String, 
-      required: true, 
+    email: {
+      type: String,
+      required: true,
       validate: {
-        validator: (v) => /^\d{10}$/.test(v),
-        message: props => `${props.value} is not a valid mobile number!`
+        validator: (v) =>
+          /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/.test(v),
+        message: (props) => `${props.value} is not a valid email address!`
       }
     },
-    email: { 
-      type: String, 
-      required: true, 
-      validate: {
-        validator: (v) => /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/.test(v),
-        message: props => `${props.value} is not a valid email address!`
-      }
-    },
-    locality: { 
-      type: String, 
-      required:true
+    locality: {
+      type: String
     },
 
-    // Dates
-    bookingDate: { 
-      type: Date, 
-      required: true 
+    // Booking & delivery dates
+    bookingDate: {
+      type: Date,
+      required: true
     },
-    deliveryDate: { 
-      type: Date, 
-      required: true 
+    deliveryDate: {
+      type: Date,
+      required: true
     },
 
-    // Sender Info
-    senderName: { 
-      type: String, 
-      required: true 
+    // Sender information
+    senderName: {
+      type: String,
+      required: true
     },
-    senderGgt: { 
-      type: String, 
-      required: true 
+    senderGgt: {
+      type: String,
+      required: true
     },
-    senderLocality: { 
-      type: String, 
-      required: true 
+    senderLocality: {
+      type: String,
+      required: true
     },
-    fromState: { 
-      type: String, 
-      required: true 
+    fromState: {
+      type: String,
+      required: true
     },
-    fromCity: { 
-      type: String, 
-      required: true 
+    fromCity: {
+      type: String,
+      required: true
     },
-    senderPincode: { 
-      type: String, 
-      required: true, 
+    senderPincode: {
+      type: String,
+      required: true,
       validate: {
         validator: (v) => /^\d{6}$/.test(v),
-        message: props => `${props.value} is not a valid pincode!`
+        message: (props) => `${props.value} is not a valid pincode!`
       }
     },
 
-    // Receiver Info
-    receiverName: { 
-      type: String, 
-      required: true 
+    // Receiver information
+    receiverName: {
+      type: String,
+      required: true
     },
-    receiverGgt: { 
-      type: String, 
-      required: true 
+    receiverGgt: {
+      type: String,
+      required: true
     },
-    receiverLocality: { 
-      type: String, 
-      required: true 
+    receiverLocality: {
+      type: String,
+      required: true
     },
-    toState: { 
-      type: String, 
-      required: true 
+    toState: {
+      type: String,
+      required: true
     },
-    toCity: { 
-      type: String, 
-      required: true 
+    toCity: {
+      type: String,
+      required: true
     },
-    toPincode: { 
-      type: String, 
-      required: true, 
+    toPincode: {
+      type: String,
+      required: true,
       validate: {
         validator: (v) => /^\d{6}$/.test(v),
-        message: props => `${props.value} is not a valid pincode!`
+        message: (props) => `${props.value} is not a valid pincode!`
       }
     },
 
-    // Reference Numbers
-    receiptNo: { 
-      type: String, 
-      required: true 
-    },
-    refNo: { 
-      type: String, 
-      required: true 
-    },
-
-    // Shipment Details
-    insurance: { 
-      type: Number, 
-      required: true 
-    },
-    vppAmount: { 
-      type: Number, 
-      required: true 
-    },
-    toPay: { 
-      type: String, 
-      required: true ,
-      enum:["pay","paid"]
-    },
-    weight: { 
-      type: Number, 
-      required: true 
-    },
-    amount: { 
-      type: Number, 
-      required: true 
-    },
-    addComment: { 
-      type: String, 
-      default: '' 
+    // Shipment items
+    items: {
+      type: [ItemSchema],
+      required: true,
+      validate: {
+        validator: (v) => v.length > 0,
+        message: 'At least one item is required.'
+      }
     },
 
-    // Tax & Billing
-    freight: { 
-      type: Number, 
-      required: true 
+    // Optional comments
+    addComment: {
+      type: String,
+      default: ''
     },
-    ins_vpp: { 
-      type: Number, 
-      required: true 
+
+    // Charges
+    freight: {
+      type: Number,
+      required: true
     },
-    cgst: { 
-      type: Number, 
-      required: true 
+    ins_vpp: {
+      type: Number,
+      required: true
     },
-    sgst: { 
-      type: Number, 
-      required: true 
+    cgst: {
+      type: Number,
+      required: true
     },
-    igst: { 
-      type: Number, 
-      required: true 
+    sgst: {
+      type: Number,
+      required: true
     },
-    billTotal: { 
-      type: Number, 
-      required: true 
+    igst: {
+      type: Number,
+      required: true
     },
-    grandTotal: { 
-      type: Number, 
+
+    // Calculated totals
+    billTotal: {
+      type: Number
+    },
+    grandTotal: {
+      type: Number
     },
     computedTotalRevenue: {
       type: Number,
       default: function () {
         return this.grandTotal;
-      },
+      }
     },
 
     // Status
-    activeDelivery: { 
-      type: Boolean, 
-      default: false 
+    activeDelivery: {
+      type: Boolean,
+      default: false
     },
-    totalCancelled: { 
-      type: Number, 
-      default: 0 
+    totalCancelled: {
+      type: Number,
+      default: 0
     },
     invoiceGenerated: {
       type: Boolean,
-      default: false,
-    },
-    
+      default: false
+    }
   },
   { timestamps: true }
 );
 
-// Auto-generate bookingId before validation
+// Auto-generate booking ID
 BookingSchema.pre('validate', function (next) {
   if (!this.bookingId) {
-    const randomDigits = Math.floor(1000 + Math.random() * 9000); // 4-digit random number
+    const randomDigits = Math.floor(1000 + Math.random() * 9000);
     this.bookingId = `BHPAR${randomDigits}BOOK`;
   }
   next();
 });
 
+// Calculate totals before saving
 BookingSchema.pre('save', function (next) {
-  // Basic charge (you can replace this with custom logic)
-  const weightRate = 50; // example: ₹50 per kg
-  this.amount = (this.weight || 0) * weightRate;
+  // Calculate total from all items
+  const itemAmounts = this.items.map(item => item.amount || 0);
+  const totalItemAmount = itemAmounts.reduce((sum, val) => sum + val, 0);
+
+  // Set billTotal
+  this.billTotal = totalItemAmount;
 
   // Calculate grandTotal
-  this.grandTotal = 
+  this.grandTotal =
+    this.billTotal +
     (this.freight || 0) +
     (this.ins_vpp || 0) +
     (this.cgst || 0) +
     (this.sgst || 0) +
-    (this.igst || 0) +
-    this.amount;
+    (this.igst || 0);
 
-  // Set computedTotalRevenue (optional)
+  // Assign revenue
   this.computedTotalRevenue = this.grandTotal;
 
   next();
 });
-
 
 const Booking = mongoose.model('Booking', BookingSchema);
 export default Booking;
