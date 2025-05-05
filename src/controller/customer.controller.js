@@ -131,7 +131,7 @@ export const getTotalCustomerCount = asyncHandler(async (req, res) => {
 
 // GET Active Customer Count
 export const getActiveCustomerCount = asyncHandler(async (req, res) => {
-  const activeCount = await Customer.countDocuments({ status: "active" });
+  const activeCount = await Customer.countDocuments({ status: "active",isBlacklisted: { $ne: true }, });
 
   return res.status(200).json(new ApiResponse(200, "Active customer count fetched successfully", { activeCount }));
 });
@@ -145,7 +145,7 @@ export const getBlacklistedCustomerCount = asyncHandler(async (req, res) => {
 
 // GET Active Customers (List)
 export const getActiveCustomers = asyncHandler(async (req, res) => {
-  const activeCustomers = await Customer.find({ status: "active" }).lean();
+  const activeCustomers = await Customer.find({ status: "active" ,isBlacklisted: { $ne: true },}).lean();
   const customerList = formatCustomerList(activeCustomers);
 
   return res.status(200).json(new ApiResponse(200, "Active customers fetched successfully", customerList));
