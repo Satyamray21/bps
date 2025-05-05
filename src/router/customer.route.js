@@ -54,10 +54,10 @@ router.get('/blacklisted-list', getBlockedCustomers);
 router.get('/:customerId', getCustomerByCustomerId);
 
 // Update customer
-router.put('/update/:id', upload.fields([{ name: 'idProofPhoto', maxCount: 1 }, { name: 'customerProfilePhoto', maxCount: 1 }]),updateCustomer);
+router.put('/update/:customerId', upload.fields([{ name: 'idProofPhoto', maxCount: 1 }, { name: 'customerProfilePhoto', maxCount: 1 }]),updateCustomer);
 
 // Delete customer
-router.delete('/delete/:id', deleteCustomer);
+router.delete('/delete/:customerId', deleteCustomer);
 
 router.patch("/status/activate/:customerId", updateCustomerStatusToActive);
 router.patch("/status/blacklist/:customerId", updateCustomerStatusToBlacklisted);

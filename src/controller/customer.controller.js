@@ -99,7 +99,7 @@ export const getCustomerByCustomerId = asyncHandler(async (req, res) => {
 
 // UPDATE Customer (Full details)
 export const updateCustomer = asyncHandler(async (req, res) => {
-  const updatedCustomer = await Customer.findByIdAndUpdate(req.params.id, req.body, {
+  const updatedCustomer = await Customer.findOneAndUpdate({customerId: req.params.customerId} , req.body, {
     new: true,
     runValidators: true,
   });
@@ -113,7 +113,7 @@ export const updateCustomer = asyncHandler(async (req, res) => {
 
 // DELETE Customer
 export const deleteCustomer = asyncHandler(async (req, res) => {
-  const deletedCustomer = await Customer.findByIdAndDelete(req.params.id);
+  const deletedCustomer = await Customer.findOneAndDelete({customerId:req.params.customerId});
 
   if (!deletedCustomer) {
     throw new ApiError(404, "Customer not found");
