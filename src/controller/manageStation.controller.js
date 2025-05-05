@@ -5,6 +5,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 
 // Create Station
 const createManageStation = asyncHandler(async (req, res) => {
+  
   const { stationName, contact, emailId, address, state, city, pincode } = req.body;
 
   if ([stationName, contact, emailId, address, state, city, pincode].some(field => typeof field === 'string' && field.trim() === "")) {

@@ -340,16 +340,17 @@ export const getBookingRevenueList = async (req, res) => {
     const data = bookings.map((b, i) => ({
       SNo:       i + 1,
       bookingId: b.bookingId,
-      date:      b.bookingDate.toISOString().slice(0,10),
-      pickup:    b.startStation.stationName,
-      drop:      b.endStation.stationName,
-      revenue:   b.grandTotal.toFixed(2),
+      date:      b.bookingDate?.toISOString().slice(0, 10) || 'N/A',
+      pickup:    b.startStation?.stationName || 'Unknown',
+      drop:      b.endStation?.stationName || 'Unknown',
+      revenue:   b.grandTotal?.toFixed(2) || '0.00',
       action: {
         view:   `/bookings/${b.bookingId}`,
         edit:   `/bookings/edit/${b.bookingId}`,
         delete: `/bookings/delete/${b.bookingId}`
       }
     }));
+    
 
     res.json({
       totalRevenue: totalRevenue.toFixed(2),
