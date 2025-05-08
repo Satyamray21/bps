@@ -16,7 +16,8 @@ const formatCustomerList = (customers) => {
 
 // CREATE Customer
 export const createCustomer = asyncHandler(async (req, res) => {
- 
+  console.log("Req files",req.files);
+  console.log("Req body",req.body);
   const {
     firstName,
     middleName,
@@ -64,16 +65,7 @@ export const createCustomer = asyncHandler(async (req, res) => {
     idProofPhoto,
     customerProfilePhoto,
   });
-  try {
-    if (idProofPhoto) {
-      await fs.unlink(idProofPhoto);
-    }
-    if (customerProfilePhoto) {
-      await fs.unlink(customerProfilePhoto);
-    }
-  } catch (error) {
-    console.error("Error deleting temp files:", error);
-  }
+  
 
   return res.status(201).json(new ApiResponse(201, "Customer created successfully", customer));
 });
@@ -113,7 +105,8 @@ export const updateCustomer = asyncHandler(async (req, res) => {
 
 // DELETE Customer
 export const deleteCustomer = asyncHandler(async (req, res) => {
-  const deletedCustomer = await Customer.findOneAndDelete({customerId:req.params.customerId});
+  const { customerId } = req.params;
+  const deletedCustomer = await Customer.findOneAndDelete({customerId});
 
   if (!deletedCustomer) {
     throw new ApiError(404, "Customer not found");

@@ -5,7 +5,8 @@ import {
   updateStation,
   deleteStation,
   getTotalStations,
-  searchStationById
+  searchStationById,
+  searchStationByName
 } from "../controller/manageStation.controller.js";
 
 
@@ -19,6 +20,10 @@ router.route("/getAllStations").get(getAllStations);
 
 
 router.route("/getTotalStations").get(getTotalStations);
+
+router.route("/name/:stationName").get(searchStationByName);
+
+
 
 
 router.route("/searchById/:stationId").get(searchStationById);

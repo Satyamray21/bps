@@ -2,6 +2,12 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import { verifyJwt } from "./middleware/auth.middleware.js";
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 const app = express()
 app.use(cors({
     origin : process.env.CORS_ORIGIN,
@@ -19,28 +25,10 @@ app.use(express.urlencoded(
         limit:"16kb"
     }
 ))
-app.use(express.static("public"));
+app.use('/public', express.static(path.join(__dirname, 'public')));
+
 app.use(cookieParser());
-const authExemptRoutes = [
-  '/api/v2/users/login',
-  '/api/v2/users/register',
-  '/api/v2/state/states',
-  '/api/v2/state/cities'  // Exempting this route, and handle dynamic :state in middleware
-];
 
-app.use((req, res, next) => {
-  // Check if the route is exempted from JWT validation
-  const exemptRoute = authExemptRoutes.some(route => {
-    // Match if the URL starts with the exempted route
-    return req.originalUrl.startsWith(route);
-  });
-
-  if (!exemptRoute) {
-    verifyJwt(req, res, next);  // Apply JWT verification to all routes
-  } else {
-    next();  // Skip JWT verification for exempted routes
-  }
-});
 
 
 import manageStation from "./router/manageStation.router.js"

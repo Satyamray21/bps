@@ -88,6 +88,7 @@ const updateStation = asyncHandler(async (req, res) => {
   );
 
   if (!updatedStation) {
+    console.log("Station not found in DB for ID:", stationId);
     throw new ApiError(404, "Station not found");
   }
 
@@ -107,11 +108,31 @@ const deleteStation = asyncHandler(async (req, res) => {
   return res.status(200).json(new ApiResponse(200, "Station deleted successfully"));
 });
 
+const searchStationByName = asyncHandler(async (req, res, next) => {
+  const { stationName } = req.params;
+
+  if (!stationName || stationName.trim() === "") {
+    return next(new ApiError(400, "Station name is required"));
+  }
+
+  const station = await manageStation.findOne({ stationName });
+
+  if (!station) {
+    return next(new ApiError(404, "Station not found with the provided name"));
+  }
+
+  res.status(200).json(new ApiResponse(200, station));
+});
+
+
+
+
 export {
   createManageStation,
   getAllStations,
   getTotalStations,
   searchStationById,
   updateStation,
-  deleteStation
+  deleteStation,
+  searchStationByName
 };
